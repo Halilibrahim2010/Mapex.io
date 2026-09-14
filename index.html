@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>mapex.io</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="phaser.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <div id="menu-overlay">
+    <div class="menu-card">
+      <h1 class="menu-title">mapex.io</h1>
+      <p class="menu-sub">KARAKTERİNİ SEÇ • ADINI GİR • DÜNYAYA ADIM AT</p>
+
+      <div class="char-section">
+        <div class="char-preview">
+          <div id="char-big" class="char-sprite-big"></div>
+          <div id="char-name" class="char-preview-name">Savaşçı 1</div>
+        </div>
+        <div class="char-grid" id="char-grid"></div>
+      </div>
+
+      <div class="menu-actions">
+        <input type="text" id="name-input" maxlength="16" placeholder="Kullanıcı adın..." />
+        <button id="name-submit">OYUNA GİR</button>
+      </div>
+
+      <p class="menu-hint">WASD / Ok tuşları: hareket • Basılı sol tık: ağaç kes • I: envanter • ESC: menü</p>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

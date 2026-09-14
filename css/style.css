@@ -1,0 +1,191 @@
+/* Pixel Art Render Ayarı & İmleç */
+*, *::before, *::after,
+html, body, canvas, input, button, div, span, h1, p {
+  cursor: url('../assets/cross.png') 25 25, default !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #0a0f0a;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+#game-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ============ GİRİŞ MENÜSÜ ============ */
+#menu-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background:
+    radial-gradient(1100px 560px at 50% -8%, rgba(76, 217, 100, 0.16), transparent 62%),
+    radial-gradient(900px 500px at 85% 110%, rgba(76, 217, 100, 0.08), transparent 60%),
+    linear-gradient(180deg, #0c140d 0%, #101a11 55%, #090d09 100%);
+}
+
+.menu-card {
+  width: min(880px, 94vw);
+  max-height: 94vh;
+  overflow: auto;
+  background: rgba(18, 26, 18, 0.94);
+  border: 1px solid #2c3a2c;
+  border-radius: 18px;
+  padding: 30px 36px 26px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  text-align: center;
+}
+
+.menu-title {
+  margin: 0;
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(180deg, #c8f7bf, #4cd964);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 14px rgba(76, 217, 100, 0.25));
+}
+
+.menu-sub {
+  margin: 6px 0 24px;
+  color: #8fae8f;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.char-section {
+  display: flex;
+  gap: 26px;
+  align-items: stretch;
+  text-align: left;
+  margin-bottom: 22px;
+}
+
+/* Önizleme Sprite */
+.char-preview {
+  flex: 0 0 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(76, 217, 100, 0.10), rgba(0, 0, 0, 0.28));
+  border: 1px solid #2c3a2c;
+  border-radius: 14px;
+  padding: 18px 14px;
+}
+
+.char-sprite-big {
+  width: 128px;
+  height: 128px;
+  background-size: 1536px 2816px;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: char-idle 0.9s steps(4) infinite;
+}
+
+@keyframes char-idle {
+  from { background-position-x: 0; }
+  to   { background-position-x: -512px; }
+}
+
+.char-preview-name {
+  margin-top: 12px;
+  color: #cfe8cf;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Karakter Izgarası */
+.char-grid {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: flex-start;
+  justify-content: center;
+}
+
+.char-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background-size: 864px 1584px;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-color: #101810;
+  border: 2px solid #2c3a2c;
+  image-rendering: pixelated;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.char-thumb:hover {
+  transform: scale(1.08);
+  border-color: #6ee582;
+}
+
+.char-thumb.selected {
+  border-color: #4cd964;
+  box-shadow: 0 0 0 2px rgba(76, 217, 100, 0.35), 0 0 16px rgba(76, 217, 100, 0.35);
+}
+
+/* Aksiyon Elemanları */
+.menu-actions {
+  display: flex;
+  gap: 12px;
+}
+
+#name-input {
+  flex: 1;
+  padding: 13px 16px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 2px solid #2c3a2c;
+  background: #0d130d;
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+}
+
+#name-input:focus {
+  border-color: #4cd964;
+}
+
+#name-submit {
+  padding: 13px 34px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #5fe376, #3dbf52);
+  color: #06230c;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 18px rgba(76, 217, 100, 0.28);
+}
+
+#name-submit:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.menu-hint {
+  margin: 18px 0 0;
+  color: #6f8a6f;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+}

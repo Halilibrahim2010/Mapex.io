@@ -1,0 +1,9 @@
+{
+  "name": "mapex-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.22.2",
+    "socket.io": "^4.7.5"
+  }
+}

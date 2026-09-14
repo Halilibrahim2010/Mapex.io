@@ -1,0 +1,12 @@
+# Node backend bağımlılıkları
+server/node_modules/
+node_modules/
+
+# Mac ve OS gereksiz sistem dosyaları
+__MACOSX/
+.DS_Store
+Thumbs.db
+
+# Log dosyaları ve ortam değişkenleri
+*.log
+.env
