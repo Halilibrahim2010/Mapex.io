@@ -1,0 +1,41 @@
+# Quaq Open Source License 2.0 (QOSL-2.0)
+
+Telif Hakkı (c) 2026 Halil İbrahim Aykol & Hüseyin Talha Tekin
+
+Bu yazılım ve ilgili belgelendirme dosyaları ("Yazılım"), telif hakkı yasaları ile korunmakta olup aşağıdaki koşullar çerçevesinde kullanıma sunulmuştur:
+
+### 0. Lisans Doğrulama ve Referans
+Bu lisans metni, orijinal **Quaq Open Source License 2.0 (QOSL-2.0)** standart metnidir.
+
+* Üçüncü taraf projeler, yalnızca `[Telif Hakkı Sahibi]` ve `[Yıl]` alanlarını kendi bilgileriyle doldurarak bu lisansı projelerinde serbestçe kullanabilirler.
+* Bu iki alan dışındaki maddelerde herhangi bir değişiklik yapılması durumunda, lisans adı "QOSL 2.0" olarak kullanılamaz.
+
+Orijinal lisans metnini doğrulamak ve karşılaştırmak için resmi referans adresi:
+https://quaq.rf.gd/QOSL-2.0.md
+
+### 1. Temel Haklar ve Özgürlükler
+Herkes bu Yazılım’ın kaynak kodunu inceleme, çalıştırma, kişisel veya eğitim amacıyla kullanma, değiştirme ve kopyalama hakkına sahiptir. 
+
+### 2. Güçlü Copyleft (Özgürlüğü Koruma Zorunluluğu)
+Bu Yazılım, açık kaynaklı bir projedir ve türevlerinin de açık kaynak kalması zorunludur.
+* Bu Yazılım’ı kullanan, değiştiren veya bu Yazılım’dan kod türeten her türlü proje; dağıtıldığı veya bir ağ üzerinden (SaaS/Bulut hizmeti dahil) kullanıma sunulduğu takdirde, yalnızca bu lisans (QOSL 2.0) veya onaylı denk bir Güçlü Copyleft lisansı ile sunulabilir.
+* Yapılan tüm değişiklikler ve eklemeler kamuoyuna açık kaynak kodlu olarak erişilebilir kılınmalıdır.
+
+### 3. Ticari Kullanım ve Çift Lisanslama (Dual-Licensing)
+* **Açık Kaynak Ticari Kullanım:** Kodlarını ve türevlerini bu lisans şartlarına uygun olarak tamamen açık kaynak tutan kişiler veya kurumlar, Yazılım’ı ticari faaliyetlerinde serbestçe kullanabilirler.
+* **Kapalı Kaynak ve Ticari Ürünler:** Bu Yazılım’ı veya türevlerini, kaynak kodunu kamuoyuna açmaksızın kapalı kaynaklı bir ürün, yazılım veya hizmet bünyesinde entegre etmek, dağıtmak veya satmak isteyen kişi ve kuruluşlar; Telif Hakkı Sahibi'nden önceden **Özel Ticari Lisans (Proprietary License)** satın almak zorundadır.
+
+### 4. Marka, İsim ve Logoların Koruması
+Bu lisans, Yazılım’ın Telif Hakkı Sahibi'ne ait ticari markaları, logoları veya proje isimlerini kullanma hakkı vermez. 
+* Orijinal geliştiricilerin veya projenin adı; türev ürünleri tanıtmak, onaylatmak veya reklam yapmak amacıyla Telif Hakkı Sahibi'nin yazılı izni olmadan kullanılamaz.
+* Türev projeler, orijinal projenin resmi bir devamı veya parçasıymış izlenimi yaratamaz.
+
+### 5. Patent Koruması ve Fesih
+* Bu Yazılım’ı kullanan herkes, Yazılım bünyesindeki kodlara ilişkin telifsiz ve dünya çapında geçerli bir patent lisansına sahip olur.
+* Herhangi bir kullanıcı veya kurum, bu Yazılım’ın kendisine veya türevlerine karşı bir patent davası ya da hukuki süreç başlatırsa; bu lisans kapsamında kendisine verilen tüm haklar, herhangi bir ihbara gerek kalmaksızın derhal ve tamamen feshedilir.
+
+### 6. Kötüye Kullanım ve Yasaklı Faaliyetler
+Yazılım; yasa dışı dinleme, zararlı yazılım (malware/spyware) yayma, kişisel verileri izinsiz toplama veya sistemlere yetkisiz erişim sağlama amacıyla kullanılamaz. Bu tür durumlarda geliştirici ekibin ve Telif Hakkı Sahibi'nin ismi sorumlu tutulamaz.
+
+### 7. Garanti Reddi ve Sorumluluk Sınırı
+Yazılım, "olduğu gibi" (AS IS) esasına göre sunulmaktadır. Telif Hakkı Sahibi; pazarlanabilirlik, belirli bir amaca uygunluk veya ihlal etmeme garantileri de dahil olmak üzere açık veya zımni hiçbir garanti vermez. Yazılım’ın kullanımından veya kod hatasından doğabilecek doğrudan, dolaylı veya kazara oluşan hiçbir zarardan Telif Hakkı Sahibi hukuken sorumlu tutulamaz.
