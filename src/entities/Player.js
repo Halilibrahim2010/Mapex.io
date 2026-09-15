@@ -42,9 +42,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   update() {
     const { moveX, moveY } = this.inputHandler.getVector();
 
-    // Hareket hesaplama ve pozisyon güncelleme
+    // Hareket hesaplama; göl varsa eksen bazında engelle (suya girilemez).
     const { newX, newY } = this.mover.update(this.x, this.y, moveX, moveY);
-    this.setPosition(newX, newY);
+    const [finalX, finalY] = this._resolveWater(newX, newY);
+    this.setPosition(finalX, finalY);
 
     // Yön flip ayarı
     if (moveX !== 0) {
@@ -63,5 +64,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.play(`${this.charKey}_idle`, true);
     }
+  }
+
+  // Ayak noktası suya düşerse hareketi eksen bazında kısıtlar (kayma hissi korur).
+  _resolveWater(newX, newY) {
+    const wg = this.scene.worldGen;
+    if (!wg || !wg.isWaterAt) return [newX, newY];
+    const FEET_OFFSET = 30;
+    if (!wg.isWaterAt(newX, newY + FEET_OFFSET)) return [newX, newY];
+    if (!wg.isWaterAt(newX, this.y + FEET_OFFSET)) return [newX, this.y];
+    if (!wg.isWaterAt(this.x, newY + FEET_OFFSET)) return [this.x, newY];
+    return [this.x, this.y];
   }
 }

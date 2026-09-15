@@ -8,6 +8,8 @@ export class WorldGenerator {
     this.loadedTrees = new Map();
     this.loadedPlants = new Map();
     this.loadedStones = new Map();
+    this.loadedLakes = new Map();
+    this.loadedLamps = new Map();
   }
 
   // Chunk koordinatlarından deterministik tohum üretir.
@@ -123,6 +125,8 @@ export class WorldGenerator {
             x: centerX,
             y: centerY,
             isBig: true,
+            // Görsel çeşitlilik: her kaya farklı taş dokusu (stone_7..stone_12)
+            tex: 7 + Math.floor(rnd() * 6),
             name: 'Rock',
             collider: { w: cellW * 2, h: cellW * 2, offset: { x: 0, y: 0 } }
           });
@@ -145,6 +149,135 @@ export class WorldGenerator {
 
     this.loadedStones.set(key, stones);
     return stones;
+  }
+
+  // Chunk içindeki gölleri üretir (deterministik). Nadir görülür (~%12) ve
+  // 1-3 lobluk düzensiz bir şekli olur; göl tamamen chunk içinde kalır.
+  generateLakes(chunkX, chunkY) {
+    const key = `lakes:${chunkX},${chunkY}`;
+    if (this.loadedLakes.has(key)) {
+      return this.loadedLakes.get(key);
+    }
+
+    const rnd = this._seededRandom(this._chunkSeed(chunkX, chunkY, 3));
+    const lakes = [];
+    if (rnd() < 0.12) {
+      const cx = 5 + Math.floor(rnd() * 6); // 5..10
+      const cy = 5 + Math.floor(rnd() * 6);
+      // Ana havuz + istenirse 1-2 ek lob: düzensiz, doğal şekil.
+      const circles = [this._clampedCircle(cx, cy, 2 + Math.floor(rnd() * 3))];
+      const lobes = 1 + Math.floor(rnd() * 3);
+      for (let i = 0; i < lobes; i++) {
+        const ox = cx + Math.floor(rnd() * 5) - 2;
+        const oy = cy + Math.floor(rnd() * 5) - 2;
+        circles.push(this._clampedCircle(ox, oy, 1 + Math.floor(rnd() * 3)));
+      }
+      lakes.push({ circles });
+    }
+
+    this.loadedLakes.set(key, lakes);
+    return lakes;
+  }
+
+  // Merkezi chunk içinde kalacak şekilde kenara sıkıştırılmış daire.
+  _clampedCircle(cx, cy, r) {
+    return {
+      cx: Math.max(r, Math.min(this.chunkSize - 1 - r, cx)),
+      cy: Math.max(r, Math.min(this.chunkSize - 1 - r, cy)),
+      r
+    };
+  }
+
+  // Dünya koordinatındaki nokta su mu? (göllere girilemez kontrolü)
+  isWaterAt(worldX, worldY) {
+    const tx = Math.floor(worldX / this.tileSize);
+    const ty = Math.floor(worldY / this.tileSize);
+    const chunkX = Math.floor(tx / this.chunkSize);
+    const chunkY = Math.floor(ty / this.chunkSize);
+    const col = tx - chunkX * this.chunkSize;
+    const row = ty - chunkY * this.chunkSize;
+    for (const lake of this.generateLakes(chunkX, chunkY)) {
+      for (const c of lake.circles) {
+        const dx = col - c.cx;
+        const dy = row - c.cy;
+        if (dx * dx + dy * dy <= c.r * c.r) return true;
+      }
+    }
+    return false;
+  }
+
+  // Tile merkezinden göl derinliği: 0 (kıyı) .. 1 (en derin). Suda değilse -1.
+  waterDepthAt(chunkX, chunkY, col, row) {
+    let best = -1;
+    for (const lake of this.generateLakes(chunkX, chunkY)) {
+      for (const c of lake.circles) {
+        const dx = col - c.cx;
+        const dy = row - c.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= c.r) {
+          const depth = 1 - dist / c.r; // 0 kıyı, 1 merkez
+          if (depth > best) best = depth;
+        }
+      }
+    }
+    return best;
+  }
+
+  // Chunk başına en fazla bir gaz lambası (fener): nadir, göl kenarını tercih
+  // eder. Ağaçların, kayaların ve suyun üstüne çıkmaz; çıkamazsa hiç çıkmaz.
+  generateLamps(chunkX, chunkY) {
+    const key = `lamps:${chunkX},${chunkY}`;
+    if (this.loadedLamps.has(key)) {
+      return this.loadedLamps.get(key);
+    }
+
+    const rnd = this._seededRandom(this._chunkSeed(chunkX, chunkY, 4));
+    let lamps = [];
+    // Göl varsa her göle bir fener; göl yoksa nadiren (%6) açık alanda.
+    const hasLake = this.generateLakes(chunkX, chunkY).length > 0;
+    if (hasLake || rnd() < 0.06) {
+      const worldSize = this.chunkSize * this.tileSize;
+      const clampTile = (t) => Math.max(1, Math.min(this.chunkSize - 2, t));
+      // Konum: göl varsa kıyının 1-2 karo dışı, yoksa açık bir alan.
+      const lakes = this.generateLakes(chunkX, chunkY);
+      let tx, ty;
+      if (lakes.length) {
+        const c = lakes[0].circles[0];
+        const ang = rnd() * Math.PI * 2;
+        const dist = c.r + 1 + rnd();
+        tx = clampTile(c.cx + Math.round(Math.cos(ang) * dist));
+        ty = clampTile(c.cy + Math.round(Math.sin(ang) * dist));
+      } else {
+        tx = 2 + Math.floor(rnd() * (this.chunkSize - 4));
+        ty = 2 + Math.floor(rnd() * (this.chunkSize - 4));
+      }
+      const toWorld = (t) => chunkX * worldSize + t * this.tileSize + this.tileSize / 2;
+      let x = toWorld(tx);
+      let y = toWorld(ty);
+      // Ağaç/kaya/su çakışması varsa birkaç kez kaydır; olmazsa vazgeç.
+      const stones = this.generateStones(chunkX, chunkY);
+      const trees = this.generateTrees(chunkX, chunkY);
+      const MIN_DIST = 48;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const collides = stones.some(s => Math.hypot(s.x - x, s.y - y) < MIN_DIST) ||
+          trees.some(t => Math.hypot(t.x - x, t.y - y) < MIN_DIST) ||
+          this.isWaterAt(x, y);
+        if (!collides) break;
+        x = toWorld(clampTile(tx + Math.floor(rnd() * 5) - 2));
+        y = toWorld(clampTile(ty + Math.floor(rnd() * 5) - 2));
+        if (attempt === 7) lamps = [];
+      }
+      if (!stones.some(s => Math.hypot(s.x - x, s.y - y) < MIN_DIST) &&
+          !trees.some(t => Math.hypot(t.x - x, t.y - y) < MIN_DIST) &&
+          !this.isWaterAt(x, y)) {
+        lamps = [{ x, y, type: 9 + Math.floor(rnd() * 3) }]; // 9, 10 veya 11
+      } else {
+        lamps = [];
+      }
+    }
+
+    this.loadedLamps.set(key, lamps);
+    return lamps;
   }
 
   generateChunkData(chunkX, chunkY) {
@@ -180,6 +313,7 @@ export class WorldGenerator {
             tileData[row][col].itemId = s.itemId;
             tileData[row][col].stone = s.itemId;
             tileData[row][col].stoneSize = s.size;
+            tileData[row][col].stoneTex = s.tex || 1;
             tileData[row][col].stoneStartCol = startCol;
             tileData[row][col].stoneStartRow = startRow;
             tileData[row][col].stoneSpan = span;

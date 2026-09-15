@@ -245,6 +245,8 @@ export class HarvestSystem {
           if (child.type !== 'Image') continue;
           const texKey = child.texture.key;
           if (!texKey || !texKey.startsWith('stone_')) continue;
+          // Kayalar (büyük taşlar) toplanamaz, isim de gösterilmez.
+          if (child.getData && child.getData('itemId') === 'rock') continue;
           const dx = child.x - feetX;
           const dy = child.y - feetY;
           const dist = Math.hypot(dx, dy);
@@ -338,6 +340,8 @@ export class HarvestSystem {
         if (child.type === 'Image' && child.texture && child.texture.key) {
           const texKey = child.texture.key;
           if (texKey.startsWith('stone_')) {
+            // Kayalar (büyük taşlar) toplanamaz.
+            if (child.getData && child.getData('itemId') === 'rock') continue;
             const stoneType = parseInt(texKey.replace('stone_', ''));
             // Sadece küçük taşlar (1-8) toplanabilir
             if (stoneType >= 1 && stoneType <= 8) {
@@ -385,6 +389,8 @@ if (nearest && nearestDist < 60) {
         if (child.type === 'Image' && child.texture && child.texture.key) {
           const texKey = child.texture.key;
           if (texKey.startsWith('stone_')) {
+            // Kayalar (büyük taşlar) toplanamaz, hover yazısı da çıkmaz.
+            if (child.getData && child.getData('itemId') === 'rock') continue;
             const stoneType = parseInt(texKey.replace('stone_', ''));
             if (stoneType >= 1 && stoneType <= 8) {
               const dist = Math.hypot(player.x - child.x, player.y - child.y);
