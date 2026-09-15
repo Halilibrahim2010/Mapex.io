@@ -5,6 +5,7 @@ import { SoundFX } from '../core/SoundFX.js';
 import { UI_DEPTH } from '../ui/uiDepth.js';
 import { ChunkManager } from '../world/ChunkManager.js';
 import { WorldObjectWindow } from '../world/WorldObjectWindow.js';
+import { DayNightCycle } from '../world/DayNightCycle.js';
 import { HarvestSystem } from '../world/HarvestSystem.js';
 import { Hud } from '../ui/Hud.js';
 import { PauseMenu } from '../ui/PauseMenu.js';
@@ -50,25 +51,30 @@ export class MainScene extends Phaser.Scene {
   preload() {
     this.load.image('field_tile_38', 'assets/Tiles0/FieldsTile_38.png');
     for (let i = 1; i <= this.TOTAL_GRASS_TYPES; i++) {
-      this.load.image(`grass_${i}`, `assets/Objects0/Grass/${i}.png`);
+      this.load.image(`grass_${i}`, `assets/Objects/Grass/${i}.png`);
     }
     for (let i = 1; i <= this.TOTAL_STONE_TYPES; i++) {
-      this.load.image(`stone_${i}`, `assets/Objects0/Stone/${i}.png`);
+      this.load.image(`stone_${i}`, `assets/Objects/Stone/${i}.png`);
     }
     const CHAR_FILES = { 0: 'Character 1.png', 1: 'Character 5.png', 2: 'Character 9.png' };
     for (let i = 1; i <= 18; i++) {
-      this.load.spritesheet(`char${i}`, `assets/72 Character Free/Char ${i}/${CHAR_FILES[(i - 1) % 3]}`, {
+      this.load.spritesheet(`char${i}`, `assets/Characters/Char ${i}/${CHAR_FILES[(i - 1) % 3]}`, {
         frameWidth: 64,
         frameHeight: 64
       });
     }
-    this.load.image('tree1', 'assets/Objects0/3 Decor/Tree1.png');
-    this.load.image('tree2', 'assets/Objects0/3 Decor/Tree2.png');
-    this.load.image('log', 'assets/Objects0/3 Decor/Log1.png');
+    this.load.image('tree1', 'assets/Objects/Decor/Tree1.png');
+    this.load.image('tree2', 'assets/Objects/Decor/Tree2.png');
+    this.load.image('log', 'assets/Objects/Decor/Log1.png');
+    this.load.image('action_panel', 'assets/Interface/Action_panel.png');
+    for (let i = 9; i <= 11; i++) {
+      this.load.image(`lamp_${i}`, `assets/Objects/Decor/${i}.png`);
+    }
+    this.load.image('shadow_2', 'assets/Objects/Shadow/2.png');
     this.TOTAL_FLOWER_TYPES = 12;
     this.TOTAL_PLANT_TYPES = 6;
     for (let i = 1; i <= this.TOTAL_FLOWER_TYPES; i++) {
-      this.load.image(`flower_${i}`, `assets/Objects0/Flower/${i}.png`);
+      this.load.image(`flower_${i}`, `assets/Objects/Flower/${i}.png`);
     }
   }
 
@@ -86,7 +92,8 @@ export class MainScene extends Phaser.Scene {
     this.factory = new ObjectFactory(this, this.inventory, this.placement);
 
     this.treeWindow = new WorldObjectWindow(this, {
-      generate: (cx, cy) => this.worldGen.generateTrees(cx, cy),
+      generate: (cx, cy) => this.worldGen.generateTrees(cx, cy)
+        .filter(t => !this.worldGen.isWaterAt(t.x, t.y)),
       makeSprite: (obj, id) => this._makeTreeSprite(obj, id),
       removeStateKey: null,
       onNewObject: (src, id) => {
@@ -101,7 +108,8 @@ export class MainScene extends Phaser.Scene {
     this.trees = this.treeWindow;
 
     this.plantWindow = new WorldObjectWindow(this, {
-      generate: (cx, cy) => this.worldGen.generatePlants(cx, cy),
+      generate: (cx, cy) => this.worldGen.generatePlants(cx, cy)
+        .filter(p => !this.worldGen.isWaterAt(p.x, p.y)),
       makeSprite: (obj, id) => this._makePlantSprite(obj, id),
       removeStateKey: null,
       onNewObject: null,
@@ -134,6 +142,11 @@ export class MainScene extends Phaser.Scene {
     });
 
     this.createHotbar();
+
+    this.dayNight = new DayNightCycle(this);
+    this.dayNight.create();
+
+    this.scale.on('resize', () => this.dayNight.refreshSize(), this);
 
     this.input.on('pointerdown', (pointer) => {
       if (this.menuOpen || this.inventoryOpen) return;
@@ -211,10 +224,38 @@ export class MainScene extends Phaser.Scene {
     });
   }
 
+  // Kayalar içinden geçilemez: ayak dairesi kaya dikdörtgenine girerse dışarı iter.
+  resolveRockCollisions() {
+    if (!this.player || !this.chunkManager || !this.chunkManager.rockRects) return;
+    const R = 12;          // oyuncu ayak yarıçapı
+    const FEET_OFFSET = 30;
+    let feetX = this.player.x;
+    let feetY = this.player.y + FEET_OFFSET;
+    for (const rects of this.chunkManager.rockRects.values()) {
+      for (const rect of rects) {
+        const closestX = Math.max(rect.x, Math.min(feetX, rect.x + rect.w));
+        const closestY = Math.max(rect.y, Math.min(feetY, rect.y + rect.h));
+        const dx = feetX - closestX;
+        const dy = feetY - closestY;
+        const dist = Math.hypot(dx, dy);
+        if (dist >= R) continue;
+        if (dist === 0) {
+          feetY = rect.y - R;
+        } else {
+          const push = (R - dist) / dist;
+          feetX += dx * push;
+          feetY += dy * push;
+        }
+      }
+    }
+    this.player.setPosition(feetX, feetY - FEET_OFFSET);
+  }
+
   update(time, delta) {
     if (this.player && !this.menuOpen && !this.inventoryOpen) {
       this.player.update();
       this.harvestSystem.resolveTreeCollisions();
+      this.resolveRockCollisions();
       this.harvestSystem.updateLogDrops();
       const px = Math.round(this.player.x);
       const py = Math.round(this.player.y);
@@ -240,6 +281,7 @@ export class MainScene extends Phaser.Scene {
     else if (this.hotbarGroup) this.refreshHotbar();
     this.updateClickEffects();
     this.harvestSystem.update(delta);
+    this.dayNight.update(delta);
   }
 
   _makeTreeSprite(obj, id) {
@@ -366,7 +408,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   // Envanterin ilk 5 barı: açmadan ekranda görünsün (hotbar).
-  // Tam envanter için I tuşuyla açılır.
+  // Action_panel.png içindeki 16x16 slot hücrelerinden frame türetilir;
+  // bar ekranın tam ortasında durur. Tam envanter için I tuşu.
   createHotbar() {
     const cam = this.cameras.main;
     const cw = cam.width;
@@ -374,18 +417,32 @@ export class MainScene extends Phaser.Scene {
     this.hotbarGroup = group;
     const D = UI_DEPTH - 1;
 
-    const slot = 48, gap = 8, cols = 5;
-    const totalW = cols * slot + (cols - 1) * gap;
-    const startX = cw / 2 - totalW / 2 + slot / 2;
-    const startY = cam.height - 70;
+    // Panel sheet bilgisi: 192x96, 8 slotluk sıra y=48'te, hücreler 16px.
+    const SLOT_SRC = 16;
+    const SLOT_SRC_X0 = 16;
+    const SLOT_SRC_Y = 48;
+    const SLOT_SCALE = 3;
 
+    const slot = SLOT_SRC * SLOT_SCALE; // 48
+    const gap = 8;
+    const cols = 5;
+    const totalW = cols * slot + (cols - 1) * gap;
+    // Slot merkezleri: bar tam ortalanır.
+    const startX = cw / 2 - totalW / 2 + slot / 2;
+    const startY = cam.height - 48;
+
+    const panelTex = this.textures.get('action_panel');
     this.hotbarSlots = [];
     for (let i = 0; i < cols; i++) {
+      const frameKey = `hotbar_cell_${i}`;
+      if (!panelTex.has(frameKey)) {
+        panelTex.add(frameKey, 0, SLOT_SRC_X0 + i * SLOT_SRC, SLOT_SRC_Y, SLOT_SRC, SLOT_SRC);
+      }
       const sx = startX + i * (slot + gap);
       const sy = startY;
 
-      const bg = this.add.rectangle(sx, sy, slot, slot, 0x241a10)
-        .setDepth(D).setScrollFactor(0).setInteractive();
+      const bg = this.add.image(sx, sy, 'action_panel', frameKey)
+        .setScale(SLOT_SCALE).setDepth(D).setScrollFactor(0).setInteractive();
       group.add(bg);
 
       const icon = this.add.image(sx, sy - 4, '').setScale(1.2).setDepth(D).setScrollFactor(0);
@@ -398,14 +455,14 @@ export class MainScene extends Phaser.Scene {
       group.add(countText);
 
       bg.on('pointerover', () => {
-        bg.setStrokeStyle(2, 0x4cd964, 1);
+        bg.setTint(0x9fe8a8);
         if (this._hotbarHoverText && this._hotbarHoverText.active) {
           this._hotbarHoverText.setText(this._hotbarItemNames[i] || '');
           this._hotbarHoverText.setPosition(sx, sy - slot - 10);
         }
       });
       bg.on('pointerout', () => {
-        bg.setStrokeStyle(0);
+        bg.clearTint();
       });
 
       this.hotbarSlots.push({ bg, icon, countText, index: i });
@@ -425,11 +482,7 @@ refreshHotbar() {
     const woodCount = this.inventory ? this.inventory.totalItem('wood') : this.wood;
     const stoneCount = this.inventory ? this.inventory.totalItem('stone') : (this.stone || 0);
     const hasItems = woodCount > 0 || stoneCount > 0;
-    // Hiç eşya yoksa hotbar'ı gizle
-    if (!hasItems) {
-      this.hotbarGroup.setVisible(false);
-      return;
-    }
+    // Hiç eşya yokken de hotbar görünür kalır; sadece ikonlar boş olur.
     this.hotbarGroup.setVisible(true);
     const items = [
       { name: 'Odun', count: woodCount, icon: 'log' },

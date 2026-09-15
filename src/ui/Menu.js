@@ -2,7 +2,7 @@ export function initMenu() {
   const CHAR_COUNT = 18;
   const sheetUrl = (i) => {
     const file = ['Character 1.png', 'Character 5.png', 'Character 9.png'][(i - 1) % 3];
-    return `assets/72 Character Free/Char ${i}/${file}`;
+    return `assets/Characters/Char ${i}/${file}`;
   };
 
   let selectedChar = 1;
