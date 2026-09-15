@@ -171,7 +171,7 @@ if (cell.itemId) {
             stoneImage.setDisplaySize(ROCK_SIZE, ROCK_SIZE);
             rockRects.push({
               x: posX + scene.TILE_SIZE - ROCK_SIZE / 2,
-              y: posY + scene.TILE_SIZE - ROCK_SIZE / 2,
+              y: posY + scene.TILE_SIZE - ROCK_SIZE / 2 + 15,
               w: ROCK_SIZE, h: ROCK_SIZE
             });
           } else {

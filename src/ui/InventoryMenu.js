@@ -6,7 +6,7 @@ export class InventoryMenu {
   constructor(scene, callbacks = {}) {
     this.scene = scene;
     this.callbacks = callbacks;
-    this.open = false;
+    this.isOpenState = false;
     this.group = null;
     this.woodText = null;
     this.statsText = null;
@@ -25,7 +25,7 @@ export class InventoryMenu {
   }
 
   open() {
-    if (!this.open) this.create();
+    if (!this.isOpenState) this.create();
   }
 
   close() {

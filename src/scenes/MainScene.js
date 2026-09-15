@@ -253,7 +253,10 @@ export class MainScene extends Phaser.Scene {
       }
     }
     this.player.setPosition(feetX, feetY - FEET_OFFSET);
-    this.hud.setPosition(Math.round(feetX / 32), Math.round((feetY - FEET_OFFSET) / 32));
+    this.hud.setPosition(
+      Math.round(feetX / 32), 
+      Math.round(-(feetY - FEET_OFFSET) / 32)
+    );
   }
 
   update(time, delta) {
