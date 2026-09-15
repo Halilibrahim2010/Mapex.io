@@ -62,6 +62,16 @@ export class NetworkManager {
     this.socket.on('worldState', (state) => {
       if (this.scene.applyWorldState) this.scene.applyWorldState(state);
     });
+
+    // Deterministik sunucu saati (herkeste aynı)
+    this.socket.on('timeState', (state) => {
+      if (this.scene.dayNight) this.scene.dayNight.syncTime(state);
+    });
+
+    // Kalıcı envanter (login'de ve her artışımda sunucudan gelir)
+    this.socket.on('inventoryState', (state) => {
+      if (this.scene.applyInventoryState) this.scene.applyInventoryState(state);
+    });
   }
 
   addRemotePlayer(playerInfo) {
@@ -87,15 +97,23 @@ export class NetworkManager {
     this.sendObjectRemoved('tree', id);
   }
 
-  sendStonePicked(stoneId) {
-    if (this.socket.connected) {
-      this.socket.emit('stonePicked', { id: stoneId });
-    }
-  }
-
   sendStonePicked(id) {
     if (this.socket.connected) {
       this.socket.emit('stonePicked', { id });
+    }
+  }
+
+  // Odun/taş artışını sunucuya bildir (kalıcı envanter için)
+  sendInventoryDelta(kind, n = 1) {
+    if (this.socket.connected) {
+      this.socket.emit('inventoryDelta', { kind, n });
+    }
+  }
+
+  // Shift hızlandırması: sunucu saatini herkes için ilerletir
+  sendTimeSkip(ms) {
+    if (this.socket.connected) {
+      this.socket.emit('timeSkip', { ms });
     }
   }
 

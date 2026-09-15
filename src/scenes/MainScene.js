@@ -415,6 +415,27 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
+  // Sunucudan gelen kalıcı envanter (login'de ve her artışımda).
+  // Sayacı mutlak değere ayarlar: refresh sonrası sayılar geri gelir.
+  applyInventoryState(state) {
+    if (!state) return;
+    const wood = Math.max(0, Math.floor(Number(state.wood) || 0));
+    const stone = Math.max(0, Math.floor(Number(state.stone) || 0));
+    if (this.inventory) {
+      const curWood = this.inventory.totalItem('wood');
+      const curStone = this.inventory.totalItem('stone');
+      if (wood > curWood) this.inventory.add('wood', wood - curWood);
+      if (stone > curStone) this.inventory.add('stone', stone - curStone);
+    }
+    this.wood = this.inventory ? this.inventory.totalItem('wood') : wood;
+    this.stone = this.inventory ? this.inventory.totalItem('stone') : stone;
+    if (this.hud) {
+      this.hud.setWood(this.wood);
+      this.hud.setStone(this.stone);
+    }
+    this.refreshHotbar();
+  }
+
   // Envanterin ilk 5 barı: açmadan ekranda görünsün (hotbar).
   // Action_panel.png içindeki 16x16 slot hücrelerinden frame türetilir;
   // bar ekranın tam ortasında durur. Tam envanter için I tuşu.

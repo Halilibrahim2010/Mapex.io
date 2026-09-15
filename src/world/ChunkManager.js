@@ -65,6 +65,16 @@ export class ChunkManager {
           if (this.scene.hud) this.scene.hud.setStone(this.scene.stone);
           if (this.scene.refreshHotbar) this.scene.refreshHotbar();
           if (this.scene.chopSound) this.scene.chopSound.pickup();
+          // Kalıcı kayıt: taş sunucudan da düşsün, envanter artışı bildirilsin.
+          if (child.getData) {
+            const stoneId = `stone:${child.getData('chunkCx')},${child.getData('chunkCy')}:${child.getData('stoneIndex')}`;
+            this.scene.removedByKind.stone.add(stoneId);
+            if (this.scene.network) {
+              this.scene.network.sendObjectRemoved('stone', stoneId);
+              this.scene.network.sendStonePicked(`${child.getData('chunkCx')},${child.getData('chunkCy')}`);
+              this.scene.network.sendInventoryDelta('stone', 1);
+            }
+          }
           return true;
         }
       }
@@ -164,7 +174,10 @@ if (cell.itemId) {
           )
             .setOrigin(0.5, 0.5)
             .setDepth(2)
-            .setData('itemId', cell.itemId);
+            .setData('itemId', cell.itemId)
+            .setData('stoneIndex', cell.stoneIndex)
+            .setData('chunkCx', chunkX)
+            .setData('chunkCy', chunkY);
           if (isBig) {
             // Kaya: karonun biraz altında; toplanamaz, içinden geçilemez.
             const ROCK_SIZE = scene.TILE_SIZE * 0.85;

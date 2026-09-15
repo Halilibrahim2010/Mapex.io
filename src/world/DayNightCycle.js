@@ -18,7 +18,30 @@ export class DayNightCycle {
     this.elapsedMs = (START_HOUR / 24) * DAY_LENGTH_MS;
     this.overlay = null;
     this.clockText = null;
+    // Sunucu saat senkronizasyonu: { serverNow, dayLength, recvAt }
+    this.syncedTime = null;
+    this._skipAccumulator = 0;
+    this._skipSendTimer = 0;
   }
+
+  // Sunucudan gelen saat: herkeste aynı (deterministik).
+  syncTime(state) {
+    if (!state || !Number.isFinite(state.serverNow)) return;
+    this.syncedTime = {
+      serverNow: state.serverNow,
+      dayLength: state.dayLength || DAY_LENGTH_MS,
+      recvAt: performance.now()
+    };
+  }
+
+  // Aktif gün uzunluğu: sunucuya bağlıysa sunucudan, değilse yerel sabit.
+  dayLength() {
+    return this.syncedTime ? this.syncedTime.dayLength : DAY_LENGTH_MS;
+  }
+
+  // 0 = full day, 1 = full night.
+  get nightness() {
+    const hour = (this.elapsedMs / this.dayLength()) * 24;
 
   create() {
     const w = this.scene.scale.width;
@@ -36,7 +59,6 @@ export class DayNightCycle {
     this.fastForwardKey = this.scene.input.keyboard.addKey('SHIFT');
     this.refreshSize();
   }
-
   _createNightCanvas(w, h) {
     if (this.scene.textures.exists('night_canvas')) this.scene.textures.remove('night_canvas');
     this.nightTex = this.scene.textures.createCanvas('night_canvas', Math.max(2, w), Math.max(2, h));
@@ -62,11 +84,29 @@ export class DayNightCycle {
   }
 
   update(deltaMs) {
-    // Shift: zamanı hızlı ilerlet (test için).
-    const step = this.fastForwardKey && this.fastForwardKey.isDown
-      ? deltaMs * TIME_SKIP_FACTOR
-      : deltaMs;
-    this.elapsedMs = (this.elapsedMs + step) % DAY_LENGTH_MS;
+    if (this.syncedTime) {
+      // Sunucu saati: bağlandığı andan beri geçen süreyi ekleyerek ilerlet.
+      const s = this.syncedTime;
+      this.elapsedMs = (s.serverNow + (performance.now() - s.recvAt)) % s.dayLength;
+    }
+
+    // Shift: zamanı hızlandır (sunucuya bağlıyken HERKES için ilerler).
+    const skipStep = this.fastForwardKey && this.fastForwardKey.isDown
+      ? deltaMs * TIME_SKIP_FACTOR - deltaMs
+      : 0;
+    if (skipStep > 0) {
+      this.elapsedMs = (this.elapsedMs + skipStep) % this.dayLength();
+      this._skipAccumulator += skipStep;
+      this._skipSendTimer += deltaMs;
+      if (this.scene.network && this._skipSendTimer >= 400) {
+        this.scene.network.sendTimeSkip(Math.floor(this._skipAccumulator));
+        this._skipAccumulator = 0;
+        this._skipSendTimer = 0;
+      }
+    } else if (!this.syncedTime) {
+      // Sunucu yoksa (offline test) yerel saatle ilerle.
+      this.elapsedMs = (this.elapsedMs + deltaMs) % this.dayLength();
+    }
 
     const nightness = this.nightness;
     if (nightness <= 0.01) {
@@ -131,8 +171,8 @@ export class DayNightCycle {
   }
 
   formatClock() {
-    const hour = Math.floor((this.elapsedMs / DAY_LENGTH_MS) * 24);
-    const minute = Math.floor((((this.elapsedMs / DAY_LENGTH_MS) * 24) % 1) * 60);
+    const hour = Math.floor((this.elapsedMs / this.dayLength()) * 24);
+    const minute = Math.floor((((this.elapsedMs / this.dayLength()) * 24) % 1) * 60);
     return String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
   }
 }

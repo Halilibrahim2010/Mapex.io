@@ -301,6 +301,8 @@ export class HarvestSystem {
         if (this.scene.inventory) {
           this.scene.inventory.add('wood', 1);
         }
+        // Sunucuya bildir: envanter kalıcı olsun
+        if (this.scene.network) this.scene.network.sendInventoryDelta('wood', 1);
         this.scene.wood = (this.scene.inventory ? this.scene.inventory.totalItem('wood') : this.scene.wood + 1);
         if (this.scene.woodText) this.scene.woodText.setText('Odun: ' + this.scene.wood);
         if (this.scene.refreshHotbar) this.scene.refreshHotbar();
@@ -368,7 +370,15 @@ if (nearest && nearestDist < 60) {
       if (this.scene.hud) this.scene.hud.setStone(this.scene.stone);
       if (this.scene.refreshHotbar) this.scene.refreshHotbar();
       this.scene.chopSound.pickup();
-      // Sunucuya bildir
+      // Sunucuya bildir: alınan taş kalıcı olarak kayıttan düşer.
+      if (nearest.getData) {
+        const stoneId = `stone:${nearest.getData('chunkCx')},${nearest.getData('chunkCy')}:${nearest.getData('stoneIndex')}`;
+        this.scene.removedByKind.stone.add(stoneId);
+        if (this.scene.network) {
+          this.scene.network.sendObjectRemoved('stone', stoneId);
+          this.scene.network.sendInventoryDelta('stone', 1);
+        }
+      }
       if (this.scene.network) this.scene.network.sendStonePicked(nearestKey);
       return true;
     }
