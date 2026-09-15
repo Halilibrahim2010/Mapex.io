@@ -40,9 +40,6 @@ export class DayNightCycle {
   }
 
   // 0 = full day, 1 = full night.
-  get nightness() {
-    const hour = (this.elapsedMs / this.dayLength()) * 24;
-
   create() {
     const w = this.scene.scale.width;
     const h = this.scene.scale.height;
@@ -76,7 +73,7 @@ export class DayNightCycle {
 
   // 0 = full day, 1 = full night.
   get nightness() {
-    const hour = (this.elapsedMs / DAY_LENGTH_MS) * 24;
+    const hour = (this.elapsedMs / this.dayLength()) * 24;
     if (hour >= SUNRISE_END && hour < SUNSET_START) return 0;
     if (hour >= SUNSET_END || hour < SUNRISE_START) return 1;
     if (hour < SUNRISE_END) return 1 - (hour - SUNRISE_START) / (SUNRISE_END - SUNRISE_START);
