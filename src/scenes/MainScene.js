@@ -33,6 +33,8 @@ export class MainScene extends Phaser.Scene {
     this.wood = 0;
     this.stone = 0;
     this.woodText = null;
+    this.xPositionText = null;
+    this.yPositionText = null;
     this.stoneText = null;
     this.inventoryOpen = false;
     this.inventoryGroup = null;
@@ -136,6 +138,8 @@ export class MainScene extends Phaser.Scene {
     this.hud.create();
     this.woodText = this.hud.woodText;
     this.stoneText = this.hud.stoneText;
+    this.xPositionText = this.hud.xPositionText;
+    this.yPositionText = this.hud.yPositionText;
     this.pauseMenu = new PauseMenu(this, {
       onOpenInventory: () => this.openInventory(),
       onStateChange: (open) => { this.menuOpen = open; }
@@ -249,6 +253,7 @@ export class MainScene extends Phaser.Scene {
       }
     }
     this.player.setPosition(feetX, feetY - FEET_OFFSET);
+    this.hud.setPosition(Math.round(feetX / 32), Math.round((feetY - FEET_OFFSET) / 32));
   }
 
   update(time, delta) {

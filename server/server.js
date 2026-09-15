@@ -23,8 +23,7 @@ io.on('connection', (socket) => {
 socket.emit('currentPlayers', players);
     socket.emit('worldState', { removed: Array.from(choppedTrees).map(id => ({ kind: 'tree', id })) });
     socket.broadcast.emit('playerJoined', players[socket.id]);
-
-  // İstemci artık { name, char } gönderir; eski istemcilerin düz string'i de desteklenir
+    
   socket.on('setName', (data) => {
     if (!players[socket.id]) return;
     const name = typeof data === 'string' ? data : (data && data.name);
