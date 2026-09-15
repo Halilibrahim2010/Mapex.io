@@ -46,6 +46,8 @@ export class LocalServer {
         this._takeDrop(data.id);
         break;
       case 'harvest':
+        this._harvest(data);
+        break;
       case 'objectRemoved':
         this._fire('inventoryState', this._snapshot());
         break;
@@ -107,6 +109,26 @@ export class LocalServer {
       if (slot.count <= 0) this.inventory[i] = null;
     }
     return count - remaining;
+  }
+
+  // Kesme tamamlandı: tanımdaki drop eşyası 1..countMax arası rastgele adet
+  // yere serilir (sunucudaki davranışın yerel eşdeğeri).
+  _harvest(data) {
+    if (!data) return;
+    const def = getObjectDef(data.kind);
+    const drop = def && def.drop;
+    const drops = [];
+    if (drop) {
+      const min = Math.max(1, Math.floor(drop.count || 1));
+      const max = Math.max(min, Math.floor(drop.countMax || min));
+      const count = min + Math.floor(Math.random() * (max - min + 1));
+      for (let i = 0; i < count; i++) {
+        drops.push({ id: `d${++this.dropSeq}`, itemId: drop.itemId, x: data.x, y: data.y, at: Date.now() });
+      }
+      this.drops.push(...drops);
+    }
+    this._fire('inventoryState', this._snapshot());
+    if (drops.length) this._fire('dropsSpawned', { drops });
   }
 
   _breakdown(data) {

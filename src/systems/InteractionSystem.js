@@ -103,6 +103,7 @@ export class InteractionSystem {
     if (target && target.id !== this.holdTarget) target.progress = 0;
     this.holdTarget = nextId;
     this.soundTimer = 0;
+    this._broadcastHold();
   }
 
   pointerMove(worldX, worldY) {
@@ -120,6 +121,21 @@ export class InteractionSystem {
     this.holdTarget = null;
     if (this.chopBar) this.chopBar.clear();
     if (this.scene.player) this.scene.player.setChopping(false);
+    this._broadcastHold();
+  }
+
+  // Kesme hedefi/ilerlemesi sunucuya bildirilir: karşı taraf sarı barı görsün.
+  _broadcastHold() {
+    if (!this.scene.movementSync) return;
+    this.scene.movementSync.setHold(this._holdSnapshot());
+  }
+
+  _holdSnapshot() {
+    if (!this.holdTarget) return { id: null, progress: 0, x: 0, y: 0 };
+    const record = this.layer.get(this.holdTarget);
+    if (!record) return { id: null, progress: 0, x: 0, y: 0 };
+    const ratio = Math.min(1, record.progress / record.def.harvest.holdTime);
+    return { id: this.holdTarget, progress: Math.round(ratio * 100) / 100, x: record.data.x, y: record.data.y };
   }
 
   _resetProgress(id) {
@@ -173,11 +189,13 @@ export class InteractionSystem {
     }
     record.progress += dt;
     this._drawProgressBar(record);
+    this._broadcastHold();
     if (record.progress >= harvest.holdTime) {
       this._break(record);
       this.holdTarget = null;
       this.chopBar.clear();
       player.setChopping(false);
+      this._broadcastHold();
     }
   }
 
@@ -211,13 +229,15 @@ export class InteractionSystem {
     g.fillStyle(0x7ec850, 1).fillRoundedRect(x, y, Math.max(2, w * progress), h, 2);
   }
 
-  // Kırma: görsel kaldırılır, düşen eşya ve dünya durumu sunucuya bildirilir.
+  // Kesme: görsel kaldırılır, düşen eşya ve dünya durumu sunucuya bildirilir.
+  // Düşenlerin adedi sunucuda üretilir (deterministik olsun diye); istemci
+  // yalnızca nesnenin konumunu bildirir.
   _break(record) {
     const scene = this.scene;
-    const result = this.layer.remove(record.id);
-    if (!result) return;
-    if (result.drop) scene.sendBreakdown(result.drop.itemId, result.drop.count, result.x, result.y);
-    scene.network.sendObjectRemoved(record.type, record.id);
+    const x = record.data.x;
+    const y = record.data.y;
+    this.layer.remove(record.id);
+    scene.network.sendHarvest(record.type, record.id, x, y);
   }
 
   // --- Çarpışma: kaya (obstacle) ve kesilen ağaç gövdeleri ---
@@ -233,6 +253,9 @@ export class InteractionSystem {
     }
   }
 
+  // Oyuncuyu dikdörtgenin dışına, en kısa yöne iterek çıkarır. İçeride
+  // sıkışmışsa (distance 0) en yakın kenardan dışarı taşır; böylece asla
+  // kilitlenip kalmaz.
   _pushOutOfRect(player, rect) {
     const feetX = player.x;
     const feetY = player.y + FEET_OFFSET;
@@ -241,14 +264,31 @@ export class InteractionSystem {
     const dx = feetX - closestX;
     const dy = feetY - closestY;
     const distance = Math.hypot(dx, dy);
+
     if (distance >= PLAYER_RADIUS) return;
-    if (distance === 0) {
-      player.y = rect.y - PLAYER_RADIUS - FEET_OFFSET;
+
+    if (distance > 0.001) {
+      const push = (PLAYER_RADIUS - distance) / distance;
+      player.x = Math.round(feetX + dx * push);
+      player.y = Math.round(feetY + dy * push - FEET_OFFSET);
       return;
     }
-    const push = (PLAYER_RADIUS - distance) / distance;
-    player.x = Math.round(feetX + dx * push);
-    player.y = Math.round(feetY + dy * push - FEET_OFFSET);
+
+    // Ayak noktası dikdörtgenin tam içinde: en yakın kenara doğru çıkar.
+    const outLeft = feetX - rect.x;
+    const outRight = rect.x + rect.w - feetX;
+    const outTop = feetY - rect.y;
+    const outBottom = rect.y + rect.h - feetY;
+    const min = Math.min(outLeft, outRight, outTop, outBottom);
+    if (min === outTop) {
+      player.y = Math.round(rect.y - PLAYER_RADIUS - FEET_OFFSET);
+    } else if (min === outBottom) {
+      player.y = Math.round(rect.y + rect.h + PLAYER_RADIUS - FEET_OFFSET);
+    } else if (min === outLeft) {
+      player.x = Math.round(rect.x - PLAYER_RADIUS);
+    } else {
+      player.x = Math.round(rect.x + rect.w + PLAYER_RADIUS);
+    }
   }
 
   _pushOutOfCircle(player, cx, cy, radius) {

@@ -9,6 +9,21 @@ const SLOT_SRC_X0 = 16;
 const SLOT_SRC_Y = 48;
 const SLOT_SCALE = 3;
 
+// Slot ikonları: boş texture key'i Phaser'da __MISSING'e düşer ve görünmez
+// kalır; bu yüzden ikonlar geçerli bir dokuyla (ilk tanımlı nesne) yaratılır,
+// içerik gelince setTexture ile değiştirilir.
+const ICON_PLACEHOLDER = '__ICON_EMPTY__';
+const ICON_MAX_SIZE = 40;
+
+function ensureIconPlaceholder(scene) {
+  if (scene.textures.exists(ICON_PLACEHOLDER)) return;
+  const g = scene.make.graphics({ x: 0, y: 0, add: false });
+  g.fillStyle(0x000000, 0);
+  g.fillRect(0, 0, 2, 2);
+  g.generateTexture(ICON_PLACEHOLDER, 2, 2);
+  g.destroy();
+}
+
 export class InventoryView {
   constructor(scene) {
     this.scene = scene;
@@ -18,11 +33,15 @@ export class InventoryView {
     this.selectedIndex = null;
     this.dropBuffer = '';
     this._hoverText = null;
+    ensureIconPlaceholder(scene);
   }
 
+  // Nesnenin envanterde gösterilecek ikon anahtarı (JSON'daki ilk texture).
   iconOf(itemId) {
     const def = getObjectDef(itemId);
-    return def ? (def.textures[0] || null) : null;
+    if (!def || !def.textures.length) return null;
+    const key = def.textures[0];
+    return this.scene.textures.exists(key) ? key : null;
   }
 
   labelOf(itemId) {
@@ -68,7 +87,7 @@ export class InventoryView {
       const bg = this.scene.add.image(x, startY, 'action_panel', frameKey)
         .setScale(SLOT_SCALE).setDepth(depth).setScrollFactor(0).setInteractive();
       group.add(bg);
-      const icon = this.scene.add.image(x, startY - 4, '').setScale(1.2)
+      const icon = this.scene.add.image(x, startY - 4, ICON_PLACEHOLDER).setScale(1.2)
         .setDepth(depth).setScrollFactor(0).setVisible(false);
       group.add(icon);
       const countText = this.scene.add.text(x + slot / 2 - 4, startY + slot / 2 - 6, '', {
@@ -86,20 +105,35 @@ export class InventoryView {
     return this.hotbar;
   }
 
+  // İkonu slota sığacak şekilde ölçekler (pixel art oranı korunur).
+  _fitIcon(icon, maxSize = ICON_MAX_SIZE) {
+    icon.setScale(1);
+    const src = icon.getSourceImage ? icon.getSourceImage() : null;
+    const w = src ? src.width : icon.width;
+    const h = src ? src.height : icon.height;
+    if (!w || !h) return;
+    const scale = Math.min(maxSize / w, maxSize / h);
+    icon.setScale(scale);
+  }
+
   refreshHotbar(items) {
     if (!this.hotbar) return;
     const { slots, startX, startY, slot, gap } = this.hotbar;
     for (let i = 0; i < slots.length; i++) {
-      const entry = items[i];
-      const icon = entry ? this.iconOf(entry.itemId) : null;
-      if (!entry || !icon) {
-        slots[i].icon.setVisible(false);
-        slots[i].countText.setVisible(false);
+      // items öğeleri { slot: { itemId, count }, index } biçimindedir.
+      const slotData = items[i] ? items[i].slot : null;
+      const icon = slotData ? this.iconOf(slotData.itemId) : null;
+      const s = slots[i];
+      if (!slotData || !icon) {
+        s.icon.setVisible(false);
+        s.countText.setVisible(false);
         continue;
       }
-      slots[i].icon.setVisible(true).setTexture(icon);
-      slots[i].countText.setText(String(entry.count)).setVisible(true);
-      slots[i].icon.setPosition(startX + i * (slot + gap), startY - 4);
+      s.icon.setTexture(icon);
+      this._fitIcon(s.icon, slot * 0.7);
+      s.icon.setVisible(true);
+      s.countText.setText(String(slotData.count)).setVisible(true);
+      s.icon.setPosition(startX + i * (slot + gap), startY - 4);
     }
   }
 
@@ -156,7 +190,7 @@ export class InventoryView {
     const bg = this.scene.add.rectangle(x, y, slot, slot, 0x241a10)
       .setDepth(d).setScrollFactor(0).setInteractive();
     group.add(bg);
-    const icon = this.scene.add.image(x, y - 4, '').setScale(1.5)
+    const icon = this.scene.add.image(x, y - 4, ICON_PLACEHOLDER).setScale(1.5)
       .setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(icon);
     const countText = this.scene.add.text(x + slot / 2 - 5, y + slot / 2 - 4, '', {
@@ -212,10 +246,11 @@ export class InventoryView {
     this.window.items = items;
     const { cells } = this.window;
     for (let i = 0; i < cells.length; i++) {
-      const entry = items[i];
+      // items öğeleri { slot: { itemId, count }, index } biçimindedir.
+      const slotData = items[i] ? items[i].slot : null;
       const cell = cells[i];
-      const icon = entry ? this.iconOf(entry.itemId) : null;
-      if (!entry || !icon) {
+      const icon = slotData ? this.iconOf(slotData.itemId) : null;
+      if (!slotData || !icon) {
         cell.icon.setVisible(false);
         cell.countText.setVisible(false);
         cell.label.setVisible(false);
@@ -224,15 +259,17 @@ export class InventoryView {
         if (this.selectedIndex !== i) cell.bg.setStrokeStyle(0);
         continue;
       }
-      cell.icon.setTexture(icon).setVisible(true);
-      cell.countText.setText(String(entry.count)).setVisible(true);
-      cell.label.setText(this.labelOf(entry.itemId)).setVisible(true);
-      this._bindHover(cell, i, entry);
+      cell.icon.setTexture(icon);
+      this._fitIcon(cell.icon, 44);
+      cell.icon.setVisible(true);
+      cell.countText.setText(String(slotData.count)).setVisible(true);
+      cell.label.setText(this.labelOf(slotData.itemId)).setVisible(true);
+      this._bindHover(cell, i, slotData);
     }
     if (stats) this.window.statsText.setText(stats);
   }
 
-  _bindHover(cell, index, entry) {
+  _bindHover(cell, index, slotData) {
     const bg = cell.bg;
     bg.off('pointerover');
     bg.off('pointerout');
@@ -240,7 +277,7 @@ export class InventoryView {
       if (this.selectedIndex !== index) bg.setStrokeStyle(2, 0x4cd964, 0.6);
       const hover = this._hoverText;
       if (!hover) return;
-      hover.setText(this.stackLabelOf(entry.itemId, entry.count));
+      hover.setText(this.stackLabelOf(slotData.itemId, slotData.count));
       hover.setPosition(bg.x, bg.y - 46).setVisible(true);
     });
     bg.on('pointerout', () => {

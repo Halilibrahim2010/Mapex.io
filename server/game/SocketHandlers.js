@@ -3,6 +3,19 @@
 // kullanır; sunucu yalnızca değişiklikleri (removed + drops) tutar.
 const GameData = require('./GameData');
 
+// Oyuncu kimliği: envanter ve istatistikler bu anahtarla saklanır. Şimdilik
+// geçici olarak IP adresi kullanılır (aynı isimde iki oyuncu birbirinin
+// eşyalarına erişemesin). İleride kalıcı hesap sistemiyle değiştirilecek.
+function trackerIdOf(socket) {
+  const forwarded = socket.handshake.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length) {
+    return 'ip:' + forwarded.split(',')[0].trim();
+  }
+  const address = socket.handshake.address || socket.conn.remoteAddress || '';
+  // IPv4-mapped IPv6 (::ffff:1.2.3.4) biçimini sadeleştir.
+  return 'ip:' + String(address).replace(/^::ffff:/, '');
+}
+
 function attachSocketHandlers(io, world, store, clock, players) {
   io.on('connection', (socket) => {
     players.create(socket.id);
@@ -14,9 +27,10 @@ function attachSocketHandlers(io, world, store, clock, players) {
     socket.on('hello', (data) => {
       const player = players.setName(socket.id, data) || players.get(socket.id);
       players.setChar(socket.id, data && data.char);
-      store.stats.assign(socket.id, data && data.trackerId);
+      const trackerId = trackerIdOf(socket);
+      store.stats.assign(socket.id, trackerId);
       socket.broadcast.emit('playerNameSet', { id: socket.id, name: player.name, char: player.char });
-      socket.emit('inventoryState', store.snapshot(data && data.trackerId));
+      socket.emit('inventoryState', store.snapshot(trackerId));
     });
 
     socket.on('setName', (data) => {
@@ -41,11 +55,14 @@ function attachSocketHandlers(io, world, store, clock, players) {
       socket.emit('inventoryState', store.snapshot(trackerId));
     });
 
-    // Kesme tamamlandı: nesne dünyadan düşer, herkese yayınlanır.
+    // Kesme tamamlandı: nesne dünyadan düşer, tanımındaki drop eşyası yere
+    // serilir ve herkese yayınlanır.
     socket.on('harvest', (data) => {
       if (!data || typeof data.id !== 'string') return;
-      store.chop(socket.id, data.kind, data.id);
+      const result = store.chop(socket.id, data.kind, data.id, data.x, data.y);
+      if (!result) return;
       socket.broadcast.emit('objectRemoved', { kind: data.kind, id: data.id });
+      if (result.drops.length) io.emit('dropsSpawned', { drops: result.drops });
       const trackerId = store.stats.idOf(socket.id);
       if (trackerId) socket.emit('inventoryState', store.snapshot(trackerId));
     });

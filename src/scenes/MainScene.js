@@ -1,12 +1,16 @@
 // Oyun sahnesi: yalnızca sistemleri kurar ve her frame onları çalıştırır.
 // Oyun mantığı sistemlerde (world/, systems/, ui/) yaşar; sahne ince kalır.
-import { getGameData, statsList } from '../core/ObjectDefs.js';
+import { getGameData, statsList, getCharacters } from '../core/ObjectDefs.js';
+import { consumeStartRequest } from '../core/StartRequest.js';
 import { WorldGenerator } from '../core/WorldGenerator.js';
+import { safeSpawnPoint } from '../world/SpawnPoint.js';
 import { TerrainSystem } from '../systems/TerrainSystem.js';
 import { InteractionSystem } from '../systems/InteractionSystem.js';
 import { DropSystem } from '../systems/DropSystem.js';
 import { NetworkManager } from '../network/NetworkManager.js';
+import { MovementSync } from '../network/MovementSync.js';
 import { GroundLayer, GROUND_KIND } from '../world/GroundLayer.js';
+import { InventoryUi } from '../ui/InventoryUi.js';
 import { ObjectLayer } from '../world/ObjectLayer.js';
 import { DayNightCycle } from '../world/DayNightCycle.js';
 import { Player } from '../entities/Player.js';
@@ -18,7 +22,6 @@ import { Inventory } from '../core/Inventory.js';
 
 const CURSOR_TIP_OFFSET_X = -6;
 const CURSOR_TIP_OFFSET_Y = -10;
-const HOOK = 'mapex:start';
 
 export class MainScene extends Phaser.Scene {
   constructor() {
@@ -40,7 +43,9 @@ export class MainScene extends Phaser.Scene {
 
     this.generator = new WorldGenerator(data.chunkSize, data.tileSize);
     this.terrain = new TerrainSystem(this.generator);
-    this.player = new Player(this, 0, 0);
+
+    const spawn = this._safeSpawnPoint();
+    this.player = new Player(this, spawn.x, spawn.y);
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.startFollow(this.player, true, 1, 1);
 
@@ -64,8 +69,17 @@ export class MainScene extends Phaser.Scene {
     this._bindInput();
     this.ground.update(0, 0);
     this.layer.update(0, 0);
-    window.addEventListener(HOOK, (event) => this.startGame(event.detail.name, event.detail.char), { once: true });
+
+    // Menü, oyun sahnesi hazır olmadan tıklandıysa bekleyen isteği şimdi uygula;
+    // aksi halde sonraki tıklamayı bekle.
+    consumeStartRequest((name, char) => this.startGame(name, char));
   }
+
+  // Doğuş noktası mantığı world/SpawnPoint.js içinde (engel + su kontrolü).
+  _safeSpawnPoint() {
+    return safeSpawnPoint(this.generator, this.terrain, this.TILE_SIZE);
+  }
+
 
   preload() {
     // Asset yükleme PreloadScene'de tamamlanır (JSON'dan türetilir).
@@ -109,7 +123,8 @@ export class MainScene extends Phaser.Scene {
     if (this.isStarted) return;
     this.isStarted = true;
     this.playerName = name || 'Oyuncu';
-    const charId = (char && char >= 1 && char <= 18) ? char : 1;
+    const charCount = getCharacters().count;
+    const charId = (char && char >= 1 && char <= charCount) ? char : 1;
     this.player.setCharacter(`char${charId}`);
     this.player.activateInput();
     this.playerNameText = this.add.text(this.player.x, this.player.y, this.playerName, {
@@ -121,6 +136,9 @@ export class MainScene extends Phaser.Scene {
       .setDepth(10);
 
     this.network = new NetworkManager(this, this.playerName, charId);
+    // Ağ senkronu için gönderilen son değerler (gereksiz paket göndermemek için).
+    this.inventoryUi = new InventoryUi(this);
+    this.movementSync = new MovementSync(this);
     this.pauseMenu.bindEscapeKey();
     this._bindKeyActions();
   }
@@ -186,7 +204,7 @@ export class MainScene extends Phaser.Scene {
 
   // Hotbar/envanter çizimi için sıralı liste (dolu slotlar).
   inventoryItems() {
-    return this.inventory.slots.map((slot, index) => ({ slot, index })).filter((entry) => entry.slot);
+    return this.inventoryUi.items();
   }
 
   // --- Sunucu olayları ---
@@ -205,56 +223,43 @@ export class MainScene extends Phaser.Scene {
     if (state.drops) this.drops.applyState(state.drops);
   }
 
+  refreshUi() {
+    this.inventoryUi.refresh();
+  }
+
+
+  // Uzak oyuncu bir nesneyi kaldırdı: görseli sil, kütük varsa bırak.
   handleRemoteObjectRemoved(kind, id) {
     this._removedSet(kind).add(id);
     const record = this.layer.get(id);
     if (!record) {
-      if (kind === GROUND_KIND) this.ground.invalidate(this._chunkOf(id)[0], this._chunkOf(id)[1]);
+      // Nesne bu istemcide kayıtlı değil: zemin ise chunk yeniden çizilir.
+      if (kind === GROUND_KIND) {
+        const chunk = this._chunkOf(id);
+        this.ground.invalidate(chunk[0], chunk[1]);
+      }
       return;
     }
     this.layer.remove(id);
     if (record.def.stump) this.sfx.treeBreak();
   }
 
+  // id bicimi: "kind:chunkX,chunkY:index" -> chunk koordinatlarini verir.
   _chunkOf(id) {
-    const match = /:(-?\d+),(-?\d+):/.exec(id);
+    const match = new RegExp(String.raw`:(-?\d+),(-?\d+):`).exec(id);
     if (!match) return [0, 0];
     return [parseInt(match[1], 10), parseInt(match[2], 10)];
   }
-
-  refreshUi() {
-    const items = this.inventoryItems();
-    this.hud.update(items.map((entry) => ({
-      itemId: entry.slot.itemId,
-      name: this.inventoryView.labelOf(entry.slot.itemId),
-      count: entry.slot.count
-    })));
-    this.inventoryView.refreshHotbar(items);
-    if (!this.inventoryView.isOpen) return;
-    this.inventoryView.refresh(items, this.summaryText());
-  }
-
-  // Özet satırı: sayaçlar JSON'dan, kaynak adları nesne tanımından gelir.
-  summaryText() {
-    const stats = this.stats || {};
-    const parts = statsList()
-      .filter((stat) => Number.isFinite(stats[stat.id]))
-      .map((stat) => `${stat.label}: ${stats[stat.id]}`);
-    for (const stat of statsList()) {
-      if (stat.resource) parts.push(`${this.inventoryView.labelOf(stat.resource)}: ${this.inventory.count(stat.resource)}`);
-    }
-    return parts.join('    •    ');
-  }
-
   // --- Frame döngüsü ---
 
   update(time, delta) {
     if (this.player && !this.menuOpen && !this.inventoryOpen) {
+      // Katmanlar önce tazelenir: çarpışma çözümü güncel collider'larla yapılmalı.
+      this._updateLayers();
       this.player.update();
       this.interactions.resolveCollisions();
       this.interactions.update(delta);
       this._syncNetwork();
-      this._updateLayers();
       this._updateDepth();
     }
     this.interactions.updateHover(this.drops);
@@ -264,18 +269,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   _syncNetwork() {
-    if (!this.network) return;
-    const x = Math.round(this.player.x);
-    const y = Math.round(this.player.y);
-    if (x !== this.lastSentX || y !== this.lastSentY) {
-      this.network.sendMove(x, y, this.player.facingLeft);
-      this.lastSentX = x;
-      this.lastSentY = y;
-    }
-    if (this.playerNameText) {
-      this.playerNameText.setPosition(this.player.x, this.player.y - 44);
-    }
-    this.network.update();
+    if (this.movementSync) this.movementSync.update();
   }
 
   _updateLayers() {

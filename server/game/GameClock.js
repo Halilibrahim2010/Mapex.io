@@ -40,7 +40,7 @@ class GameClock {
   }
 }
 
-const PLAYER_DEFAULTS = { x: 0, y: 0, facingLeft: false, name: 'Oyuncu', char: 1 };
+const PLAYER_DEFAULTS = { x: 0, y: 0, facingLeft: false, name: 'Oyuncu', char: 1, anim: 0, hold: null };
 const MAX_CHAR_ID = 18;
 
 class PlayerRegistry {
@@ -83,7 +83,24 @@ class PlayerRegistry {
     player.x = Number(data.x) || 0;
     player.y = Number(data.y) || 0;
     player.facingLeft = Boolean(data.facingLeft);
+    // Animasyon durumu (0 idle, 1 walk, 2 chop): karşı istemci aynı animasyonu
+    // oynatsın diye taşınır; geçersiz değerde eski durum korunur.
+    const anim = Number(data.anim);
+    if (Number.isInteger(anim) && anim >= 0 && anim <= 2) player.anim = anim;
+    // Kesme barı bilgisi: { id, progress, x, y }. Uzak tarafta sarı bar çizilir.
+    if (data.hold) player.hold = this.sanitizeHold(data.hold);
     return player;
+  }
+
+  // Kesme bilgisini güvenli aralıklara sıkıştırır (istemci verisi doğrulanır).
+  sanitizeHold(hold) {
+    const progress = Number(hold.progress);
+    return {
+      id: hold.id === null || hold.id === undefined ? null : String(hold.id).slice(0, 64),
+      progress: Number.isFinite(progress) ? Math.max(0, Math.min(1, progress)) : 0,
+      x: Number(hold.x) || 0,
+      y: Number(hold.y) || 0
+    };
   }
 
   remove(socketId) {

@@ -5,7 +5,10 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/assets.test.mjs && node test/flow.test.js"
+    "test": "node test/assets.test.mjs && node test/client-imports.mjs && node test/flow.test.js && node test/e2e-harvest.mjs && node test/e2e-sync.mjs",
+    "test:e2e": "node test/e2e-harvest.mjs && node test/e2e-sync.mjs",
+    "test:browser": "node test/browser-smoke.mjs",
+    "test:http": "node test/http-assets.mjs"
   },
   "dependencies": {
     "express": "^4.22.2",

@@ -1,12 +1,14 @@
 // Karakter ızgarası ve isim girişi. Karakter listesi shared/objectDefs.json'dan
 // gelir; yeni karakter eklemek için bu dosyaya dokunmak gerekmez.
+// PreloadScene veriyi zaten yüklediyse fetch yapılmaz (tek istek).
+import { ensureGameData, getCharacters } from '../core/ObjectDefs.js';
+
 const DEFAULT_CHARACTERS = { count: 18, files: ['Character 1.png', 'Character 5.png', 'Character 9.png'], names: ['Savaşçı'] };
 
 async function fetchCharacters() {
   try {
-    const response = await fetch('shared/objectDefs.json');
-    const data = await response.json();
-    return data.characters || DEFAULT_CHARACTERS;
+    await ensureGameData();
+    return getCharacters();
   } catch (error) {
     return DEFAULT_CHARACTERS;
   }

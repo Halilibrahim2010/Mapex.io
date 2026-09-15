@@ -1,5 +1,6 @@
 import { RemotePlayer } from '../entities/RemotePlayer.js';
 import { LocalServer } from './LocalServer.js';
+import { ANIM_STATE } from '../entities/AnimState.js';
 
 const SERVER_URL = 'http://' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost') + ':3019';
 
@@ -30,7 +31,7 @@ export class NetworkManager {
     this.socket.disconnect();
     this.socket = new LocalServer(this.scene);
     this._bindEvents();
-    this.emit('hello', { name: this.name, char: this.char, trackerId: this.name });
+    this.emit('hello', { name: this.name, char: this.char });
   }
 
   on(event, callback) {
@@ -51,7 +52,8 @@ export class NetworkManager {
 
   _bindEvents() {
     this.on('connect', () => {
-      this.emit('hello', { name: this.name, char: this.char, trackerId: this.name });
+      // trackerId gönderilmez: envanter kimliğini sunucu IP'den belirler.
+      this.emit('hello', { name: this.name, char: this.char });
     });
 
     this.on('currentPlayers', (players) => {
@@ -65,7 +67,7 @@ export class NetworkManager {
 
     this.on('playerMoved', (info) => {
       const remote = this.remotePlayers.get(info.id);
-      if (remote) remote.setServerPosition(info.x, info.y, info.facingLeft);
+      if (remote) remote.setServerPosition(info.x, info.y, info.facingLeft, info.anim, info.hold);
     });
 
     this.on('playerNameSet', (info) => {
@@ -114,8 +116,8 @@ export class NetworkManager {
     this.remotePlayers.set(info.id, remote);
   }
 
-  sendMove(x, y, facingLeft) {
-    this.emit('playerMove', { x, y, facingLeft });
+  sendMove(x, y, facingLeft, anim, hold) {
+    this.emit('playerMove', { x, y, facingLeft, anim, hold });
   }
 
   // Dünya nesnesi kaldırıldı (kesilen ağaç, toplanan taş, akan kaya…).
@@ -123,9 +125,9 @@ export class NetworkManager {
     this.emit('objectRemoved', { kind, id });
   }
 
-  // Kesme tamamlandı: sunucu istatistik ve dünya durumunu günceller.
-  sendHarvest(kind, id) {
-    this.emit('harvest', { kind, id });
+  // Kesme tamamlandı: sunucu nesneyi kaldırır, düşenleri üretir ve yayınlar.
+  sendHarvest(kind, id, x, y) {
+    this.emit('harvest', { kind, id, x, y });
   }
 
   sendPick(itemId) {

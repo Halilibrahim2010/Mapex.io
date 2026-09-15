@@ -78,20 +78,27 @@ function buildGameData(source) {
 
 // Preload sahnesi JSON'u Phaser cache'ine indirdiği için veri buradan verilir;
 // başka bir çağrı yeri eksikse dosya yolu üzerinden çekilir.
-export async function loadGameData(source) {
+// Not: `source` verildiğinde senkron çalışır (Phaser create içinden çağrılır).
+export function loadGameData(source) {
   if (gameData) return gameData;
-  let data = source;
-  if (!data) {
-    const response = await fetch('shared/objectDefs.json');
-    if (!response.ok) throw new Error('objectDefs.json yüklenemedi: ' + response.status);
-    data = await response.json();
+  if (source) {
+    gameData = buildGameData(source);
+    return gameData;
   }
-  gameData = buildGameData(data);
+  throw new Error('loadGameData(): veri kaynağı yok (objectDefs.json yüklenmeli)');
+}
+
+// Veri henüz yüklenmediyse dosyadan çeker (menü gibi Phaser dışı yerler için).
+export async function ensureGameData() {
+  if (gameData) return gameData;
+  const response = await fetch('shared/objectDefs.json');
+  if (!response.ok) throw new Error('objectDefs.json yüklenemedi: ' + response.status);
+  gameData = buildGameData(await response.json());
   return gameData;
 }
 
 export function getGameData() {
-  if (!gameData) throw new Error('loadGameData() önce çağrılmalı');
+  if (!gameData) throw new Error('loadGameData()/ensureGameData() önce çağrılmalı');
   return gameData;
 }
 

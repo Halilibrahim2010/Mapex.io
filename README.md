@@ -80,12 +80,23 @@ src/
 server/
   game/               → GameData, GameWorld, InventoryStore, StatsTracker,
                         GameClock, SocketHandlers
-  test/               → flow.test.js (soket akışı), assets.test.mjs (veri tutarlılığı)
+  test/               → assets.test.mjs (veri), client-imports.mjs (modül grafı),
+                        flow.test.js (soket), http-assets.mjs (HTTP erişimi)
 ```
+
+## Başlatma Akışı
+
+1. `src/main.js` → `ensureGameData()` ile `shared/objectDefs.json` çekilir.
+   Başarısız olursa menüde "Bağlantı hatası" gösterilir (takılı kalmaz).
+2. `PreloadScene` → tüm sprite/karakter/arayüz dosyalarını JSON'dan türetip yükler.
+3. `MainScene` → sistemleri kurar; menüden gelen `mapex:start` isteğini uygular.
+   Menü erken tıklanırsa istek `src/core/StartRequest.js`'te bekletilir ve
+   sahne hazır olduğunda işlenir.
 
 ## Test
 
 ```bash
 cd server
-npm test            # veri tutarlılığı + soket akışı (sunucu 3019'da açık olmalı)
+npm test            # veri tutarlılığı + istemci modül import + soket akışı
+npm run test:http   # sunucunun tüm asset'leri HTTP 200 döndürüyor mu (sunucu açık olmalı)
 ```

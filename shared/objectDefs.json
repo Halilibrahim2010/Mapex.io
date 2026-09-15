@@ -50,7 +50,7 @@
   "objects": {
     "stone": {
       "name": "Taş",
-      "stackLabel": "Taş {tex}",
+      "stackLabel": "Taş",
       "kind": "resource",
       "interaction": "pickup",
       "shape": { "w": 1, "h": 1 },
@@ -84,11 +84,11 @@
       "kind": "harvestable",
       "interaction": "hold",
       "shape": { "w": 2, "h": 2 },
-      "sprite": { "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 1, "scale": 1.6, "depth": 3000, "groundOffset": 61, "collider": 16 },
+      "sprite": { "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 1, "scale": 1.6, "depth": 3000, "groundOffset": 61, "collider": 0.7 },
       "spawn": { "chance": 0.25, "cells": 4, "salt": 0, "bigOnly": true, "size": "big" },
       "harvest": { "holdTime": 8, "range": 70, "hitHeight": 20, "hitHalfWidth": 34, "shakes": 1 },
-      "drop": { "itemId": "wood", "count": 3 },
-      "stump": { "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 2, "scale": 1.7, "offsetY": -12, "offsetX": 12, "collider": 12 }
+      "drop": { "itemId": "wood", "count": 1, "countMax": 3 },
+      "stump": { "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 2, "scale": 1.7, "offsetY": -12, "offsetX": 12, "collider": 0.7 }
     },
 
     "plant": {

@@ -11,7 +11,7 @@ const objectDefsUrl = pathToFileURL(path.join(root, 'src', 'core', 'ObjectDefs.j
 const { loadGameData, spriteFileList, objectDefs, statsList, emptyStats, getObjectDef, getCharacters, getInterface } =
   await import(objectDefsUrl);
 
-await loadGameData(json);
+loadGameData(json);
 
 const results = [];
 const check = (name, ok, detail) => results.push({ name, ok: Boolean(ok), detail });

@@ -1,6 +1,7 @@
 import { createCharAnims } from '../animations/CharAnims.js';
 import { PixelMovement } from '../utils/Movement.js';
 import { PlayerInput } from '../core/Input.js';
+import { ANIM_STATE, animKeyOf, animStateOf } from './AnimState.js';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, charKey = 'char1') {
@@ -14,6 +15,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.facingLeft = false;
     this.chopAnim = false;
+    this.animState = ANIM_STATE.IDLE;
 
     this.mover = new PixelMovement(120);
     this.inputHandler = new PlayerInput(scene);
@@ -53,16 +55,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setFlipX(this.facingLeft);
     }
 
-    // Animasyon durumları
-    if (this.chopAnim) {
-      const punchKey = `${this.charKey}_punch`;
-      if (!this.anims.isPlaying || this.anims.currentAnim.key !== punchKey) {
-        this.play(punchKey, true);
-      }
-    } else if (moveX !== 0 || moveY !== 0) {
-      this.play(`${this.charKey}_walk`, true);
-    } else {
-      this.play(`${this.charKey}_idle`, true);
+    // Animasyon: kesme > yürüme > durma. Durum ağ üzerinden de gönderilir ki
+    // karşı taraf aynı animasyonu görsün.
+    this.animState = animStateOf(moveX, moveY, this.chopAnim);
+    const key = animKeyOf(this.charKey, this.animState);
+    if (!this.anims.isPlaying || this.anims.currentAnim.key !== key) {
+      this.play(key, true);
     }
   }
 

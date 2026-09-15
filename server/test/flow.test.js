@@ -13,6 +13,13 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Envanterdeki toplam eşya sayısı (slot sırasından bağımsız).
+function totalOf(state, itemId) {
+  return (state?.slots || [])
+    .filter((slot) => slot && slot.itemId === itemId)
+    .reduce((sum, slot) => sum + slot.count, 0);
+}
+
 function once(socket, event, timeoutMs = 3000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`zaman aşımı: ${event}`)), timeoutMs);
@@ -24,9 +31,6 @@ function once(socket, event, timeoutMs = 3000) {
 }
 
 async function main() {
-  // Sunucu envanteri trackerId'ye bağlı bellekte tutulur; her koşu benzersiz
-  // bir kimlik kullanır ki test tekrarlanabilir olsun.
-  const trackerId = 'test-tracker-' + Date.now();
   const socket = io(URL, { transports: ['websocket'], autoConnect: false });
   const pendingWorld = once(socket, 'worldState');
   const pendingTime = once(socket, 'timeState');
@@ -40,15 +44,28 @@ async function main() {
   const timeState = await pendingTime;
   check('timeState geldi', Number.isFinite(timeState.serverNow), timeState);
 
-  socket.emit('hello', { name: 'TestOyuncu', char: 3, trackerId });
+  socket.emit('hello', { name: 'TestOyuncu', char: 3 });
   const inv0 = await once(socket, 'inventoryState');
   check('envanter 15 slot', inv0.slots.length === 15, inv0.slots.length);
   check('sayaçlar JSON tanımından geliyor', Number.isFinite(inv0.stats.chopped), inv0.stats);
 
-  socket.emit('pick', { itemId: 'stone' });
-  socket.emit('pick', { itemId: 'stone' });
-  const inv1 = await once(socket, 'inventoryState');
-  check('taş envantere girdi', inv1.slots[0] && inv1.slots[0].itemId === 'stone', inv1.slots[0]);
+  // Envanter IP'ye bağlı saklanır ve koşular arasında birikebilir; bu yüzden
+  // tüm kontroller mutlak sayı yerine artış/azalış farkı üzerinden yapılır.
+  const stoneBase = totalOf(inv0, 'stone');
+  const woodBase = totalOf(inv0, 'wood');
+  const choppedBase = inv0.stats.chopped;
+
+  // Her isteğin yanıtı ayrı ayrı beklenir: aynı anda iki istek gönderilirse
+  // ilk gelen paket diğerinin sonucunu gölgeler (test yarışı).
+  const pickStone = async () => {
+    const p = once(socket, 'inventoryState');
+    socket.emit('pick', { itemId: 'stone' });
+    return p;
+  };
+  await pickStone();
+  const inv1 = await pickStone();
+  check('taş envantere girdi', totalOf(inv1, 'stone') === stoneBase + 2,
+    `${stoneBase} -> ${totalOf(inv1, 'stone')}`);
 
   // Sunucu bilinmeyen itemda değişiklik yapmaz; bu yüzden yanıt beklenmez.
   socket.emit('pick', { itemId: 'bilinmeyen' });
@@ -62,7 +79,8 @@ async function main() {
   // Odun toplamak "chopped" sayacını artırır (JSON stats.resource = wood).
   socket.emit('pick', { itemId: 'wood' });
   const invWood = await once(socket, 'inventoryState');
-  check('odun toplayınca sayaç arttı', invWood.stats.chopped === 1, invWood.stats);
+  check('odun toplayınca sayaç arttı', invWood.stats.chopped === choppedBase + 1,
+    `${choppedBase} -> ${invWood.stats.chopped}`);
 
   const peer = io(URL, { transports: ['websocket'], autoConnect: false });
   const peerWorldPending = once(peer, 'worldState');
@@ -86,20 +104,25 @@ async function main() {
   late.disconnect();
 
   // Bırakılan eşyalar tüm oyunculara yayınlanır.
+  const stoneBeforeDrop = totalOf(inv1, 'stone');
   const spawned = once(peer, 'dropsSpawned');
+  const dropState = once(socket, 'inventoryState');
   socket.emit('drop', { itemId: 'stone', n: 2, x: 12, y: 34 });
-  const invDrop = await once(socket, 'inventoryState');
-  check('bırakınca envanter azaldı', (invDrop.slots[0] || { count: 0 }).count === 0, invDrop.slots[0]);
+  const invDrop = await dropState;
+  check('bırakınca envanter azaldı', totalOf(invDrop, 'stone') === stoneBeforeDrop - 2,
+    `${stoneBeforeDrop} -> ${totalOf(invDrop, 'stone')}`);
   const spawnedDrops = await spawned;
   check('düşen eşya diğer oyuncuya yayınlandı', spawnedDrops.drops.length === 2, spawnedDrops.drops);
 
   const dropId = spawnedDrops.drops[0].id;
+  const stoneBeforePickup = totalOf(invDrop, 'stone');
   const peerRemoved = once(peer, 'dropRemoved');
   socket.emit('pickup', { id: dropId });
   const invTaken = await once(socket, 'inventoryState');
   const removed = await peerRemoved;
   check('alınan eşya herkesten silindi', removed.id === dropId, removed);
-  check('alınan eşya envantere girdi', invTaken.slots[0].count === 1, invTaken.slots[0]);
+  check('alınan eşya envantere girdi', totalOf(invTaken, 'stone') === stoneBeforePickup + 1,
+    `${stoneBeforePickup} -> ${totalOf(invTaken, 'stone')}`);
 
   socket.emit('timeSkip', { ms: 5000 });
   socket.disconnect();

@@ -49,11 +49,28 @@ class InventoryStore {
     }
   }
 
-  // Kesme tamamlandı: nesne dünyadan düşer. Sayaç artışı toplanan kaynakla
-  // olur (drop envantere girdiğinde), bu yüzden burada sayaç değişmez.
-  chop(socketId, kind, id) {
-    if (!this.stats.idOf(socketId)) return;
-    this.gameWorld.remove(kind, id);
+  // Kesme tamamlandı: nesne dünyadan düşer ve tanımındaki "drop" eşyası
+  // (count..countMax arası rastgele adet) yere serilir. Rastgelelik sunucuda
+  // üretilir; böylece tüm istemciler aynı düşenleri görür.
+  chop(socketId, kind, id, x, y) {
+    if (!this.stats.idOf(socketId)) return null;
+    const ox = Number(x) || 0;
+    const oy = Number(y) || 0;
+
+    const def = GameData.def(kind);
+    const drop = def && def.drop;
+    const drops = [];
+    if (drop) {
+      const min = Math.max(1, Math.floor(drop.count || 1));
+      const max = Math.max(min, Math.floor(drop.countMax || min));
+      const count = min + Math.floor(Math.random() * (max - min + 1));
+      for (let i = 0; i < count; i++) drops.push(this._pushDrop(drop.itemId, ox, oy));
+    }
+
+    // Nesne zaten başka istemci tarafından kaldırılmışsa düşenleri yine de ver.
+    const removed = this.gameWorld.remove(kind, id);
+    if (!removed && drops.length === 0) return null;
+    return { drops };
   }
 
   // Yere eşya bırakma: envanterden düşer, dünya drop listesine eklenir.

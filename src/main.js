@@ -1,31 +1,58 @@
 import { PreloadScene } from './scenes/PreloadScene.js';
 import { MainScene } from './scenes/MainScene.js';
 import { initMenu } from './ui/Menu.js';
+import { ensureGameData } from './core/ObjectDefs.js';
+import './core/StartRequest.js';
 
-const config = {
-  type: Phaser.AUTO,
-  width: window.innerWidth,
-  height: window.innerHeight,
-  parent: 'game-container',
-  pixelArt: true,
-  roundPixels: true,
-  clearBeforeRender: true,
-  backgroundColor: '#000000',
-  physics: {
-    default: 'arcade',
-    arcade: {
-      debug: false
+// Oyun verisi (shared/objectDefs.json) Phaser başlamadan önce yüklenir; böylece
+// PreloadScene dosya listesini tek turda, senkron olarak kurabilir.
+async function boot() {
+  try {
+    await ensureGameData();
+  } catch (error) {
+    console.error('Oyun verisi yüklenemedi:', error);
+    const overlay = document.getElementById('menu-overlay');
+    if (overlay) {
+      overlay.innerHTML = '<div class="menu-card"><h1 class="menu-title">Bağlantı hatası</h1><p class="menu-sub">objectDefs.json yüklenemedi. Sunucuyu çalıştırıp sayfayı yenile.</p></div>';
     }
-  },
-  scene: [PreloadScene, MainScene]
-};
+    return;
+  }
 
-const game = new Phaser.Game(config);
+  const config = {
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    parent: 'game-container',
+    pixelArt: true,
+    roundPixels: true,
+    clearBeforeRender: true,
+    backgroundColor: '#000000',
+    physics: {
+      default: 'arcade',
+      arcade: {
+        debug: false
+      }
+    },
+    scene: [PreloadScene, MainScene]
+  };
 
-window.addEventListener('resize', () => {
-  game.scale.resize(window.innerWidth, window.innerHeight);
-});
+  const game = new Phaser.Game(config);
+  // Hata ayıklama ve tarayıcı testleri için: Phaser örneğine erişim.
+  window.__mapexGame = game;
 
-window.addEventListener('DOMContentLoaded', () => {
-  initMenu().catch((error) => console.error('Menü başlatılamadı:', error));
-});
+  window.addEventListener('resize', () => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+  });
+
+  // Modüller defer ile çalıştığı için DOMContentLoaded çoktan geçmiş olabilir;
+  // bu yüzden menüyü doğrudan (veya henüz yüklenmediyse olayda) başlat.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => {
+      initMenu().catch((error) => console.error('Menü başlatılamadı:', error));
+    });
+  } else {
+    initMenu().catch((error) => console.error('Menü başlatılamadı:', error));
+  }
+}
+
+boot();

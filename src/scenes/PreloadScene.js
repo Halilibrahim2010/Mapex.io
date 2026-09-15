@@ -1,6 +1,7 @@
 // Asset yükleme sahnesi: dosya listesi tamamen shared/objectDefs.json'dan
 // türetilir, bu yüzden yeni bir nesne eklemek için buraya dokunmak gerekmez.
-import { loadGameData, spriteFileList, getCharacters, getInterface } from '../core/ObjectDefs.js';
+// Veri main.js'de Phaser başlamadan önce yüklenmiş olur (ensureGameData).
+import { spriteFileList, getCharacters, getInterface } from '../core/ObjectDefs.js';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -14,18 +15,13 @@ export class PreloadScene extends Phaser.Scene {
       fontFamily: 'Arial, sans-serif', fontSize: '20px', color: '#ffe9b0'
     }).setOrigin(0.5);
 
-    this.load.json('objectDefs', 'shared/objectDefs.json');
+    this.loadCharacters();
+    this.loadUiAssets();
+    this.loadDefinedSprites();
   }
 
   create() {
-    const source = this.cache.json.get('objectDefs');
-    loadGameData(source).then(() => {
-      this.loadCharacters();
-      this.loadUiAssets();
-      // sprite dosyaları JSON'dan türetildiği için ayrı bir yükleme turu gerekir.
-      this.load.once('complete', () => this.scene.start('MainScene'));
-      this.loadDefinedSprites();
-    });
+    this.scene.start('MainScene');
   }
 
   // Karakter spritesheet'leri JSON'daki characters ayarından yüklenir.
