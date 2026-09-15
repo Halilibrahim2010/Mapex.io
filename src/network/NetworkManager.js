@@ -1,124 +1,151 @@
 import { RemotePlayer } from '../entities/RemotePlayer.js';
+import { LocalServer } from './LocalServer.js';
+
+const SERVER_URL = 'http://' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost') + ':3019';
 
 export class NetworkManager {
-  constructor(scene, serverUrl = 'http://localhost:3019', name = 'Oyuncu', char = 1) {
+  constructor(scene, name = 'Oyuncu', char = 1) {
     this.scene = scene;
     this.name = name;
     this.char = char || 1;
-    this.socket = io(serverUrl);
     this.remotePlayers = new Map();
+    // Sunucu yoksa yerel mod aynı olayları üretir; oyun tek kişilik devam eder.
+    this.socket = this._connect();
+    this._bindEvents();
+  }
 
-    this.socket.on('connect', () => {
-      console.log('Sunucuya bağlandı, id:', this.socket.id);
-      // Karakter seçimi de isimle birlikte gönderilir
-      this.socket.emit('setName', { name: this.name, char: this.char });
+  _connect() {
+    if (typeof io !== 'function') return new LocalServer(this.scene);
+    const socket = io(SERVER_URL, { reconnectionAttempts: 1, timeout: 2500 });
+    socket.on('connect_error', () => {
+      if (socket.io) socket.io.reconnectionAttempts(0);
+      this._useLocalServer();
+    });
+    return socket;
+  }
+
+  _useLocalServer() {
+    if (this.socket instanceof LocalServer) return;
+    this.socket.removeAllListeners();
+    this.socket.disconnect();
+    this.socket = new LocalServer(this.scene);
+    this._bindEvents();
+    this.emit('hello', { name: this.name, char: this.char, trackerId: this.name });
+  }
+
+  on(event, callback) {
+    if (this.socket instanceof LocalServer) {
+      this.socket.on(event, callback);
+      return;
+    }
+    if (event === 'connect' && this.socket.connected) {
+      callback();
+      return;
+    }
+    this.socket.on(event, callback);
+  }
+
+  emit(event, data) {
+    this.socket.emit(event, data);
+  }
+
+  _bindEvents() {
+    this.on('connect', () => {
+      this.emit('hello', { name: this.name, char: this.char, trackerId: this.name });
     });
 
-    this.socket.on('currentPlayers', (players) => {
-      Object.values(players).forEach((p) => {
-        if (p.id !== this.socket.id) this.addRemotePlayer(p);
-      });
-    });
-
-    this.socket.on('playerJoined', (playerInfo) => {
-      this.addRemotePlayer(playerInfo);
-    });
-
-    this.socket.on('playerMoved', (playerInfo) => {
-      const rp = this.remotePlayers.get(playerInfo.id);
-      if (rp) rp.setServerPosition(playerInfo.x, playerInfo.y, playerInfo.facingLeft);
-    });
-
-    this.socket.on('playerNameSet', (info) => {
-      const rp = this.remotePlayers.get(info.id);
-      if (rp) {
-        rp.setName(info.name);
-        if (info.char) rp.setCharacter(info.char);
+    this.on('currentPlayers', (players) => {
+      const self = this.socket.id;
+      for (const player of Object.values(players || {})) {
+        if (player.id !== self) this.addRemotePlayer(player);
       }
     });
 
-    this.socket.on('playerLeft', (id) => {
-      const rp = this.remotePlayers.get(id);
-      if (rp) {
-        rp.destroy();
-        this.remotePlayers.delete(id);
-      }
+    this.on('playerJoined', (info) => this.addRemotePlayer(info));
+
+    this.on('playerMoved', (info) => {
+      const remote = this.remotePlayers.get(info.id);
+      if (remote) remote.setServerPosition(info.x, info.y, info.facingLeft);
     });
 
-    // Stone pickup sync from other players
-    this.socket.on('stonePicked', (data) => {
-      if (this.scene && this.scene.chunkManager && data.id) {
-        const [cx, cy] = data.id.split(',').map(Number);
-        this.scene.chunkManager.invalidate(cx, cy);
-      }
+    this.on('playerNameSet', (info) => {
+      const remote = this.remotePlayers.get(info.id);
+      if (!remote) return;
+      remote.setName(info.name);
+      if (info.char) remote.setCharacter(info.char);
     });
 
-    // Tree-break sync
-    this.socket.on('objectRemoved', (data) => {
-      if (this.scene.handleRemoteObjectRemoved) this.scene.handleRemoteObjectRemoved(data.kind, data.id);
+    this.on('playerLeft', (id) => {
+      const remote = this.remotePlayers.get(id);
+      if (!remote) return;
+      remote.destroy();
+      this.remotePlayers.delete(id);
     });
 
-    // On connect, get the already-removed world objects from the server
-    this.socket.on('worldState', (state) => {
+    this.on('worldState', (state) => {
       if (this.scene.applyWorldState) this.scene.applyWorldState(state);
     });
 
-    // Deterministik sunucu saati (herkeste aynı)
-    this.socket.on('timeState', (state) => {
-      if (this.scene.dayNight) this.scene.dayNight.syncTime(state);
+    this.on('objectRemoved', (data) => {
+      if (this.scene.handleRemoteObjectRemoved) this.scene.handleRemoteObjectRemoved(data.kind, data.id);
     });
 
-    // Kalıcı envanter (login'de ve her artışımda sunucudan gelir)
-    this.socket.on('inventoryState', (state) => {
+    this.on('inventoryState', (state) => {
       if (this.scene.applyInventoryState) this.scene.applyInventoryState(state);
+    });
+
+    this.on('dropsSpawned', (data) => {
+      if (this.scene.drops) this.scene.drops.spawnMany(data.drops, 900);
+    });
+
+    this.on('dropRemoved', (data) => {
+      if (this.scene.drops) this.scene.drops.remove(data.id);
+    });
+
+    this.on('timeState', (state) => {
+      if (this.scene.dayNight) this.scene.dayNight.syncTime(state);
     });
   }
 
-  addRemotePlayer(playerInfo) {
-    const rp = new RemotePlayer(this.scene, playerInfo.id, playerInfo.x, playerInfo.y, playerInfo.name || 'Oyuncu', playerInfo.char);
-    this.remotePlayers.set(playerInfo.id, rp);
+  addRemotePlayer(info) {
+    if (!info || !info.id) return;
+    if (this.remotePlayers.has(info.id)) return;
+    const remote = new RemotePlayer(this.scene, info.id, info.x, info.y, info.name || 'Oyuncu', info.char);
+    this.remotePlayers.set(info.id, remote);
   }
 
   sendMove(x, y, facingLeft) {
-    if (this.socket.connected) {
-      this.socket.emit('playerMove', { x, y, facingLeft });
-    }
+    this.emit('playerMove', { x, y, facingLeft });
   }
 
-  // Generic world-object removal sync (kind: 'tree' | 'grass' | 'stone').
-  // Works exactly like the old treeChopped flow, but for every decor kind.
+  // Dünya nesnesi kaldırıldı (kesilen ağaç, toplanan taş, akan kaya…).
   sendObjectRemoved(kind, id) {
-    if (this.socket.connected) {
-      this.socket.emit('objectRemoved', { kind, id });
-    }
+    this.emit('objectRemoved', { kind, id });
   }
 
-  sendTreeChopped(id) {
-    this.sendObjectRemoved('tree', id);
+  // Kesme tamamlandı: sunucu istatistik ve dünya durumunu günceller.
+  sendHarvest(kind, id) {
+    this.emit('harvest', { kind, id });
   }
 
-  sendStonePicked(id) {
-    if (this.socket.connected) {
-      this.socket.emit('stonePicked', { id });
-    }
+  sendPick(itemId) {
+    this.emit('pick', { itemId });
   }
 
-  // Odun/taş artışını sunucuya bildir (kalıcı envanter için)
-  sendInventoryDelta(kind, n = 1) {
-    if (this.socket.connected) {
-      this.socket.emit('inventoryDelta', { kind, n });
-    }
+  // Yere eşya bırakma (soyutlama/breakdown) — her bırakılan eşya ayrı drop olur.
+  sendDrop(itemId, n, x, y) {
+    this.emit('drop', { itemId, n, x, y });
   }
 
-  // Shift hızlandırması: sunucu saatini herkes için ilerletir
+  sendPickupDrop(id) {
+    this.emit('pickup', { id });
+  }
+
   sendTimeSkip(ms) {
-    if (this.socket.connected) {
-      this.socket.emit('timeSkip', { ms });
-    }
+    this.emit('timeSkip', { ms });
   }
 
-  // MainScene'in update() döngüsünde her frame çağrılmalı
   update() {
-    this.remotePlayers.forEach((rp) => rp.interpolate());
+    this.remotePlayers.forEach((remote) => remote.interpolate());
   }
 }

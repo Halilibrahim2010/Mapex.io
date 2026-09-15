@@ -1,3 +1,4 @@
+import { PreloadScene } from './scenes/PreloadScene.js';
 import { MainScene } from './scenes/MainScene.js';
 import { initMenu } from './ui/Menu.js';
 
@@ -7,7 +8,8 @@ const config = {
   height: window.innerHeight,
   parent: 'game-container',
   pixelArt: true,
-  clearBeforeRender: true, 
+  roundPixels: true,
+  clearBeforeRender: true,
   backgroundColor: '#000000',
   physics: {
     default: 'arcade',
@@ -15,7 +17,7 @@ const config = {
       debug: false
     }
   },
-  scene: [MainScene]
+  scene: [PreloadScene, MainScene]
 };
 
 const game = new Phaser.Game(config);
@@ -25,5 +27,5 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-  initMenu();
+  initMenu().catch((error) => console.error('Menü başlatılamadı:', error));
 });

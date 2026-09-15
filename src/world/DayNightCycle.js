@@ -5,8 +5,6 @@ export const DAY_LENGTH_MS = 15 * 60 * 1000; // one full in-game day = 15 real m
 export const START_HOUR = 10;
 export const TIME_SKIP_FACTOR = 40;   // Shift basılıyken zaman kaç kat hızlı akar
 export const LIGHT_RADIUS = 65;       // gece karakter etrafındaki tam aydınlık yarıçapı (px)
-export const LAMP_LIGHT_RADIUS = 55;  // fener ışığı yarıçapı
-export const LAMP_LIGHT_STRENGTH = 0.5; // fener ışığının karanlığı açma gücü (hafif)
 
 // Hours where darkness transitions happen.
 const SUNRISE_START = 5, SUNRISE_END = 7;
@@ -144,22 +142,21 @@ export class DayNightCycle {
     }
 
     // Fenerler: küçük, hafif bir ışıltı (karanlığın yarısını bile açmaz).
-    if (this.scene.chunkManager && this.scene.chunkManager.lampPoints) {
+    const lights = this.scene.layer ? this.scene.layer.lights : null;
+    if (lights) {
       ctx.globalCompositeOperation = 'destination-out';
-      for (const points of this.scene.chunkManager.lampPoints.values()) {
-        for (const p of points) {
-          const sx = p.x - cam.scrollX;
-          const sy = p.y - cam.scrollY;
-          if (sx < -LAMP_LIGHT_RADIUS * 2 || sy < -LAMP_LIGHT_RADIUS * 2 ||
-              sx > w + LAMP_LIGHT_RADIUS * 2 || sy > h + LAMP_LIGHT_RADIUS * 2) continue;
-          const grad = ctx.createRadialGradient(sx, sy, 6, sx, sy, LAMP_LIGHT_RADIUS);
-          grad.addColorStop(0, `rgba(0,0,0,${LAMP_LIGHT_STRENGTH})`);
-          grad.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(sx, sy, LAMP_LIGHT_RADIUS, 0, Math.PI * 2);
-          ctx.fill();
-        }
+      for (const light of lights.values()) {
+        const sx = light.x - cam.scrollX;
+        const sy = light.y - cam.scrollY;
+        const radius = light.radius;
+        if (sx < -radius * 2 || sy < -radius * 2 || sx > w + radius * 2 || sy > h + radius * 2) continue;
+        const grad = ctx.createRadialGradient(sx, sy, 6, sx, sy, radius);
+        grad.addColorStop(0, `rgba(0,0,0,${light.strength})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
     }

@@ -68,12 +68,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // Ayak noktası suya düşerse hareketi eksen bazında kısıtlar (kayma hissi korur).
   _resolveWater(newX, newY) {
-    const wg = this.scene.worldGen;
-    if (!wg || !wg.isWaterAt) return [newX, newY];
+    const terrain = this.scene.terrain;
+    if (!terrain || !terrain.isWaterAt) return [newX, newY];
     const FEET_OFFSET = 30;
-    if (!wg.isWaterAt(newX, newY + FEET_OFFSET)) return [newX, newY];
-    if (!wg.isWaterAt(newX, this.y + FEET_OFFSET)) return [newX, this.y];
-    if (!wg.isWaterAt(this.x, newY + FEET_OFFSET)) return [this.x, newY];
+    if (!terrain.isWaterAt(newX, newY + FEET_OFFSET)) return [newX, newY];
+    if (!terrain.isWaterAt(newX, this.y + FEET_OFFSET)) return [newX, this.y];
+    if (!terrain.isWaterAt(this.x, newY + FEET_OFFSET)) return [this.x, newY];
     return [this.x, this.y];
   }
 }

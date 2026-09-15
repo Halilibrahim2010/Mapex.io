@@ -2,8 +2,16 @@
   "name": "mapex-server",
   "version": "1.0.0",
   "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/assets.test.mjs && node test/flow.test.js"
+  },
   "dependencies": {
     "express": "^4.22.2",
     "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.7.5"
   }
 }

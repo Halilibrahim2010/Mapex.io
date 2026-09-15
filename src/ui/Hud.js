@@ -1,61 +1,59 @@
-// In-game HUD elements owned by MainScene (wood counter etc).
-// Extracted so MainScene.create/startGame stays readable.
+// HUD: envanterdeki kaynakları tek satır olarak gösterir. Hangi kaynağın
+// gösterileceği envanterdeki itemId'lerden gelir; taş/odun kodu yoktur.
 import { UI_DEPTH } from './uiDepth.js';
 
 export class Hud {
   constructor(scene) {
     this.scene = scene;
-    this.woodText = null;
-    this.stoneText = null;
-    this.xPositionText = null;
-    this.yPositionText = null;
+    this.rows = new Map(); // itemId → Text
+    this.xText = null;
+    this.yText = null;
+    this._counts = new Map();
   }
 
   create() {
-    this.woodText = this.scene.add.text(16, 12, 'Odun: 0', {
+    this.xText = this._text(16, 12, 'X: 0', '#ffffff');
+    this.yText = this._text(16, 36, 'Y: 0', '#ffffff');
+  }
+
+  _text(x, y, value, color) {
+    return this.scene.add.text(x, y, value, {
       fontFamily: 'Arial, sans-serif',
       fontSize: '16px',
       fontStyle: 'bold',
-      color: '#ffe9b0',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setScrollFactor(0).setDepth(UI_DEPTH);
-    this.stoneText = this.scene.add.text(16, 36, 'Taş: 0', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
-      fontStyle: 'bold',
-      color: '#c0c0c0',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setScrollFactor(0).setDepth(UI_DEPTH);
-    this.xPositionText = this.scene.add.text(16, 60, 'X: 0', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
-      fontStyle: 'bold',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setScrollFactor(0).setDepth(UI_DEPTH);
-    this.yPositionText = this.scene.add.text(16, 84, 'Y: 0', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
-      fontStyle: 'bold',
-      color: '#ffffff',
+      color,
       stroke: '#000000',
       strokeThickness: 3
     }).setScrollFactor(0).setDepth(UI_DEPTH);
   }
 
-  setWood(n) {
-    if (this.woodText) this.woodText.setText('Odun: ' + n);
+  // Envanterden gelen özet: [{ itemId, name, count }]
+  // Yeni bir kaynak envantere girince satırı otomatik açılır.
+  update(items) {
+    let y = 60;
+    for (const item of items) {
+      let row = this.rows.get(item.itemId);
+      if (!row) {
+        row = this._text(16, y, '', '#e8c98a');
+        this.rows.set(item.itemId, row);
+      }
+      row.setPosition(16, y);
+      row.setText(`${item.name}: ${item.count}`);
+      y += 24;
+    }
+    // Envanterde olmayan kaynakları gizle (satırlar tekrar kullanılır).
+    for (const [itemId, row] of this.rows) {
+      if (items.some((item) => item.itemId === itemId)) continue;
+      row.setVisible(false);
+    }
+    for (const item of items) {
+      const row = this.rows.get(item.itemId);
+      if (row) row.setVisible(true);
+    }
   }
 
-  setStone(n) {
-    if (this.stoneText) this.stoneText.setText('Taş: ' + n);
-  }
-  
   setPosition(x, y) {
-    if (this.xPositionText) this.xPositionText.setText('X: ' + x);
-    if (this.yPositionText) this.yPositionText.setText('Y: ' + y);
+    if (this.xText) this.xText.setText('X: ' + x);
+    if (this.yText) this.yText.setText('Y: ' + y);
   }
 }
