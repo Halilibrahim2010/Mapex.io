@@ -36,9 +36,19 @@ export class PauseMenu {
 
   // Registers the ESC key (called from MainScene.startGame).
   bindEscapeKey() {
-    const escKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-    escKey.on('down', () => this.scene.toggleMenu());
+    const escKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+
+    escKey.on('down', () => {
+      if (this.scene.inventoryOpen == true) {
+        this.scene.toggleInventory();
+      } else {
+        this.toggle();
+      }
+    });
   }
+
 
   setInfo(txt) {
     if (this.infoText) this.infoText.setText(txt);
@@ -63,7 +73,7 @@ export class PauseMenu {
 
     // Bottom info line.
     this.infoText = this.scene.add.text(cw / 2, ch - 70, '', {
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: 'PixelOperator',
       fontSize: '14px',
       color: '#cccccc',
       stroke: '#000000',
@@ -92,8 +102,8 @@ export class PauseMenu {
       group.add(bg);
 
       const label = this.scene.add.text(cw / 2, y, it.label, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '18px',
+        fontFamily: 'PixelOperator',
+        fontSize: '24px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#000000',

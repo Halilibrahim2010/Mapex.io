@@ -18,8 +18,8 @@ export class Hud {
 
   _text(x, y, value, color) {
     return this.scene.add.text(x, y, value, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '16px',
+      fontFamily: 'PixelOperator',
+      fontSize: '20px',
       fontStyle: 'bold',
       color,
       stroke: '#000000',

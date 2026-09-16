@@ -61,7 +61,7 @@ export class InteractionSystem {
   // Toplanabilir nesneyi sunucuya bildirir (sunucu envanteri günceller).
   pick(record) {
     if (!record) return false;
-    this.layer.remove(record.id);
+    this.layer.markRemoved(record.id);
     this.scene.network.sendPick(record.def.id);
     this.scene.sfx.pickup();
     return true;
@@ -236,7 +236,7 @@ export class InteractionSystem {
     const scene = this.scene;
     const x = record.data.x;
     const y = record.data.y;
-    this.layer.remove(record.id);
+    this.layer.markRemoved(record.id);
     scene.network.sendHarvest(record.type, record.id, x, y);
   }
 

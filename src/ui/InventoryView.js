@@ -91,7 +91,7 @@ export class InventoryView {
         .setDepth(depth).setScrollFactor(0).setVisible(false);
       group.add(icon);
       const countText = this.scene.add.text(x + slot / 2 - 4, startY + slot / 2 - 6, '', {
-        fontFamily: 'Arial, sans-serif', fontSize: '12px', fontStyle: 'bold',
+        fontFamily: 'PixelOperator', fontSize: '16px', fontStyle: 'bold',
         color: '#ffffff', stroke: '#000000', strokeThickness: 2
       }).setOrigin(1, 1).setDepth(depth).setScrollFactor(0);
       group.add(countText);
@@ -159,7 +159,7 @@ export class InventoryView {
     group.add(this.scene.add.rectangle(px, py, pw, ph)
       .setStrokeStyle(2, 0x8a5a2b, 1).setDepth(d).setScrollFactor(0));
     group.add(this.scene.add.text(px, py - ph / 2 + 34, 'Envanter', {
-      fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
+      fontFamily: 'PixelOperator', fontSize: '32px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5).setDepth(d).setScrollFactor(0));
     group.add(this.scene.add.rectangle(px, py - ph / 2 + 58, pw - 90, 2, 0x8a5a2b, 0.9)
@@ -194,12 +194,12 @@ export class InventoryView {
       .setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(icon);
     const countText = this.scene.add.text(x + slot / 2 - 5, y + slot / 2 - 4, '', {
-      fontFamily: 'Arial, sans-serif', fontSize: '14px', fontStyle: 'bold',
+      fontFamily: 'PixelOperator', fontSize: '18px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(1, 1).setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(countText);
     const label = this.scene.add.text(x, y + slot / 2 + 9, '', {
-      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#e8c98a',
+      fontFamily: 'PixelOperator', fontSize: '16px', color: '#e8c98a',
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5, 0).setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(label);
@@ -210,14 +210,14 @@ export class InventoryView {
 
   _createFooter(px, py, ph, d) {
     const statsText = this.scene.add.text(px, py + ph / 2 - 54, '', {
-      fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold',
+      fontFamily: 'PixelOperator', fontSize: '18px', fontStyle: 'bold',
       color: '#ffffff', stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5).setDepth(d).setScrollFactor(0);
     this.window.statsText = statsText;
     const hint = this.scene.add.text(
       px, py + ph / 2 - 24,
       'I - Kapat   •   Slot seç, sayı yaz, Enter: yere bırak', {
-        fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#9a8a6a'
+        fontFamily: 'PixelOperator', fontSize: '16px', color: '#9a8a6a'
       }
     ).setOrigin(0.5).setDepth(d).setScrollFactor(0);
     return this.scene.add.container(0, 0, [statsText, hint]).setDepth(d).setScrollFactor(0);

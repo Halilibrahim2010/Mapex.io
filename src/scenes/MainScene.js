@@ -128,8 +128,8 @@ export class MainScene extends Phaser.Scene {
     this.player.setCharacter(`char${charId}`);
     this.player.activateInput();
     this.playerNameText = this.add.text(this.player.x, this.player.y, this.playerName, {
-      fontFamily: "'Segoe UI', 'Trebuchet MS', Verdana, sans-serif",
-      fontSize: '16px',
+      fontFamily: "PixelOperator",
+      fontSize: '20px',
       color: '#ffffff'
     }).setOrigin(0.5)
       .setShadow(1, 1, 'rgba(0, 0, 0, 0.6)', 2)

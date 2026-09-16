@@ -22,8 +22,8 @@ export class RemotePlayer {
     this.sprite.play(`${this.charKey}_idle`);
 
     this.nameText = scene.add.text(x, y, this.name, {
-      fontFamily: "'Segoe UI', 'Trebuchet MS', Verdana, sans-serif",
-      fontSize: '16px',
+      fontFamily: "PixelOperator",
+      fontSize: '20px',
       color: '#ffffff'
     }).setOrigin(0.5)
       .setShadow(1, 1, 'rgba(0, 0, 0, 0.6)', 2)

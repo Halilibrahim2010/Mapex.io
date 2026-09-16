@@ -137,6 +137,20 @@ export class ObjectLayer {
     return this.records.get(id) || null;
   }
 
+  markRemoved(id) {
+    const record = this.records.get(id);
+    if (!record) return null;
+
+    if (!this.removed[record.type]) {
+      this.removed[record.type] = new Set();
+    }
+
+    this.removed[record.type].add(id);
+
+    return this.remove(id);
+  }
+
+
   // Kırma/hedefleme arayüzü: verilen dünya noktasına denk gelen en yakın nesne.
   pick(worldX, worldY, predicate) {
     let best = null;

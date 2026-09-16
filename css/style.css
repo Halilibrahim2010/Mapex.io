@@ -4,6 +4,12 @@ html, body, canvas, input, button, div, span, h1, p {
   cursor: url('../assets/cross.png') 25 25, default !important;
 }
 
+@font-face {
+  font-family: "PixelOperator";
+  src: url("../font/PixelOperator.ttf") format("truetype");
+}
+
+
 body {
   margin: 0;
   padding: 0;

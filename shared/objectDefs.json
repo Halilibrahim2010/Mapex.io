@@ -54,7 +54,7 @@
       "kind": "resource",
       "interaction": "pickup",
       "shape": { "w": 1, "h": 1 },
-      "sprite": { "atlas": "assets/Objects/Stone/{n}.png", "variants": 16, "display": 0.42, "depth": 2 },
+      "sprite": { "atlas": "assets/Objects/Stone/{n}.png", "variants": 8, "display": 0.42, "depth": 2 },
       "spawn": { "chance": 0.252, "cells": 4, "salt": 2, "bigOnly": false, "size": "small", "texMin": 1, "texMax": 1 },
       "pickup": { "range": 52, "amount": 1 }
     },
@@ -64,7 +64,7 @@
       "kind": "obstacle",
       "interaction": "none",
       "shape": { "w": 2, "h": 2 },
-      "sprite": { "atlas": "assets/Objects/Stone/{n}.png", "display": 0.85, "depth": 2, "collider": 0.85, "colliderOffsetY": 15 },
+      "sprite": { "atlas": "assets/Objects/Rock/{n}.png", "variants": 8, "display": 0.85, "depth": 2, "collider": 0.85, "colliderOffsetY": 15 },
       "spawn": { "chance": 0.3, "cells": 4, "salt": 2, "bigOnly": true, "size": "big", "texMin": 7, "texMax": 12 }
     },
 
