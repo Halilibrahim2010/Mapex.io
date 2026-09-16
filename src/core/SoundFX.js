@@ -1,8 +1,12 @@
 // Web Audio ile prosedürel ses efektleri (ses dosyası gerekmez).
 // Tarayıcı politikası gereği AudioContext ilk kullanıcı etkileşiminde oluşturulur.
+// Tüm sesler master gain düğümünden geçer (Ayarlar'daki ana ses seviyesi).
+import { getSettings } from './GameSettings.js';
+
 export class SoundFX {
   constructor() {
     this.ctx = null;
+    this.masterGain = null;
   }
 
   _ctx() {
@@ -13,6 +17,18 @@ export class SoundFX {
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
+  }
+
+  // Tüm seslerin bağlandığı çıkış: master gain (ana ses seviyesi).
+  _output() {
+    const ctx = this._ctx();
+    if (!ctx) return null;
+    if (!this.masterGain) {
+      this.masterGain = ctx.createGain();
+      this.masterGain.gain.value = getSettings().masterVolume;
+      this.masterGain.connect(ctx.destination);
+    }
+    return this.masterGain;
   }
 
   // Kısa beyaz gürültü tamponu
@@ -38,7 +54,7 @@ export class SoundFX {
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.5, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(this._output());
     osc.start(t);
     osc.stop(t + 0.17);
 
@@ -52,7 +68,7 @@ export class SoundFX {
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0.28, t);
     ng.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-    src.connect(bp).connect(ng).connect(ctx.destination);
+    src.connect(bp).connect(ng).connect(this._output());
     src.start(t);
   }
 
@@ -68,7 +84,7 @@ export class SoundFX {
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.22, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(this._output());
     osc.start(t);
     osc.stop(t + 0.15);
   }
@@ -87,7 +103,7 @@ export class SoundFX {
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.45, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(this._output());
     osc.start(t);
     osc.stop(t + 0.42);
 
@@ -101,7 +117,7 @@ export class SoundFX {
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0.35, t);
     ng.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    src.connect(lp).connect(ng).connect(ctx.destination);
+    src.connect(lp).connect(ng).connect(this._output());
     src.start(t);
   }
 }

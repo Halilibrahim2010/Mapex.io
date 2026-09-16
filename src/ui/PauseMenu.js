@@ -41,6 +41,10 @@ export class PauseMenu {
     );
 
     escKey.on('down', () => {
+      // Ayarlar paneli açıkken ESC'yi o panel yönetir; panel az önce ESC ile
+      // kapandıysa bu basımı menü tekrar kapatmasın diye yok sayarız.
+      if (this.scene.settingsOpen) return;
+      if (performance.now() - (this.scene.escConsumedAt || 0) < 150) return;
       if (this.scene.inventoryOpen == true) {
         this.scene.toggleInventory();
       } else {
@@ -84,7 +88,7 @@ export class PauseMenu {
     const self = this;
     const items = [
       { label: 'Resume', action: () => self.close() },
-      { label: 'Settings', action: () => self.setInfo('Ayarlar yakında eklenecek') },
+      { label: 'Settings', action: () => { self.close(); if (self.scene.settingsPanel) self.scene.settingsPanel.openPanel(() => self.toggle()); } },
       { label: 'Equipment', action: () => { self.close(); self.callbacks.onOpenInventory(); } },
       { label: 'Craft', action: () => self.setInfo('Zanaat yakında eklenecek') },
       { label: 'Quit', action: () => { window.location.reload(); } }

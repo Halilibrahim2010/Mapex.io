@@ -10,6 +10,8 @@ export class WorldGenerator {
     this.worldSize = chunkSize * tileSize;
     this.cache = new Map();
     this.renderConfig = getGameData().render;
+    // MainScene bunu TerrainSystem.isWaterAt'a bağlar; su kontrolü için kullanılır.
+    this.isWaterAt = null;
   }
 
   // Chunk koordinatlarından deterministik tohum üretir; salt aynı chunk'ta
@@ -74,6 +76,9 @@ export class WorldGenerator {
           ? chunkY * this.worldSize + (cy + 0.5) * cellW
           : chunkY * this.worldSize + cy * cellW + Math.floor(rnd() * cellW);
 
+        // Nesneler asla suya düşmez: ayak izinin su içinde kalması yeterli.
+        if (this._overlapsWater(x, y, def)) continue;
+
         list.push({
           itemId: id,
           size: spawn.size || 'small',
@@ -88,6 +93,16 @@ export class WorldGenerator {
       }
     }
     return list;
+  }
+
+  // Nesne ayak izinin (shape) herhangi bir köşesi suya denk gelirse spawn iptal.
+  _overlapsWater(x, y, def) {
+    if (!this.isWaterAt) return false;
+    const halfW = (def.shape ? def.shape.w : 1) * this.tileSize * 0.5;
+    const halfH = (def.shape ? def.shape.h : 1) * this.tileSize * 0.5;
+    return this.isWaterAt(x - halfW, y - halfH) || this.isWaterAt(x + halfW, y - halfH) ||
+           this.isWaterAt(x - halfW, y + halfH) || this.isWaterAt(x + halfW, y + halfH) ||
+           this.isWaterAt(x, y);
   }
 
   // Tüm veri odaklı nesne türlerini tek seferde üretir (chunk başına).

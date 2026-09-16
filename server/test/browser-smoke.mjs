@@ -167,7 +167,14 @@ check('konsol hatasi yok', errors.length === 0, errors.join(' | ').slice(0, 300)
 
 ws.close();
 browser.kill();
-fs.rmSync(profile, { recursive: true, force: true });
+// Tarayıcı profili kapanırken kısa süre kilitli kalabiliyor (Windows): temizlik
+// başarısız olsa da kontrol sonuçları geçerlidir.
+await sleep(1500);
+try {
+  fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+} catch (error) {
+  // profil klasörü silinemedi: sonucu etkilemez.
+}
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} tarayıcı kontrolü geçti`);

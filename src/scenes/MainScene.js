@@ -7,6 +7,7 @@ import { safeSpawnPoint } from '../world/SpawnPoint.js';
 import { TerrainSystem } from '../systems/TerrainSystem.js';
 import { InteractionSystem } from '../systems/InteractionSystem.js';
 import { DropSystem } from '../systems/DropSystem.js';
+import { AmbienceSystem } from '../systems/AmbienceSystem.js';
 import { NetworkManager } from '../network/NetworkManager.js';
 import { MovementSync } from '../network/MovementSync.js';
 import { GroundLayer, GROUND_KIND } from '../world/GroundLayer.js';
@@ -19,6 +20,8 @@ import { Hud } from '../ui/Hud.js';
 import { PauseMenu } from '../ui/PauseMenu.js';
 import { InventoryView } from '../ui/InventoryView.js';
 import { Inventory } from '../core/Inventory.js';
+import { SettingsPanel } from '../ui/SettingsPanel.js';
+import { getSettings, onSettingsChange } from '../core/GameSettings.js';
 
 const CURSOR_TIP_OFFSET_X = -6;
 const CURSOR_TIP_OFFSET_Y = -10;
@@ -39,10 +42,13 @@ export class MainScene extends Phaser.Scene {
     this.RENDER_DISTANCE = 2;
     this.menuOpen = false;
     this.inventoryOpen = false;
+    this.settingsOpen = false;
     this.sfx = new SoundFX();
 
     this.generator = new WorldGenerator(data.chunkSize, data.tileSize);
     this.terrain = new TerrainSystem(this.generator);
+    // Nesneler suya spawn olamaz: jeneratör su kontrolünü terrain'den alır.
+    this.generator.isWaterAt = (x, y) => this.terrain.isWaterAt(x, y);
 
     const spawn = this._safeSpawnPoint();
     this.player = new Player(this, spawn.x, spawn.y);
@@ -65,6 +71,8 @@ export class MainScene extends Phaser.Scene {
     });
     this.dayNight = new DayNightCycle(this);
     this.dayNight.create();
+    this.ambience = new AmbienceSystem(this, this.terrain);
+    this.settingsPanel = new SettingsPanel(this);
 
     this._bindInput();
     this.ground.update(0, 0);
@@ -105,7 +113,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   _pointerDown(pointer) {
-    if (this.menuOpen || this.inventoryOpen) return;
+    if (this.menuOpen || this.inventoryOpen || this.settingsOpen) return;
     const point = this._worldPoint(pointer);
     this.chopCursor = { x: point.x + CURSOR_TIP_OFFSET_X, y: point.y + CURSOR_TIP_OFFSET_Y };
     this.spawnClickEffect(this.chopCursor.x, this.chopCursor.y);
@@ -143,19 +151,43 @@ export class MainScene extends Phaser.Scene {
     this._bindKeyActions();
   }
 
+  // Aksiyon tuşları Ayarlar'dan gelir; ayar değişince tuşlar canlı yeniden bağlanır.
   _bindKeyActions() {
-    this.input.keyboard.on('keydown-I', () => {
-      if (!this.menuOpen) this.toggleInventory();
-    });
-    this.input.keyboard.on('keydown-E', () => {
-      if (this.menuOpen) return;
-      this.interactions.pickUpNearby(this.drops);
-    });
-    this.input.keyboard.on('keydown-Q', () => {
-      const entry = this.inventoryView.selectedEntry;
-      if (this.inventoryView.isOpen && entry) this.dropItem(entry.slot.itemId, 1);
-    });
+    this._keyHandlers = {
+      inventory: () => {
+        if (!this.menuOpen && !this.settingsOpen) this.toggleInventory();
+      },
+      pickup: () => {
+        if (this.menuOpen || this.settingsOpen) return;
+        this.interactions.pickUpNearby(this.drops);
+      },
+      dropItem: () => {
+        const entry = this.inventoryView.selectedEntry;
+        if (this.inventoryView.isOpen && entry) this.dropItem(entry.slot.itemId, 1);
+      }
+    };
+    this._attachAllKeys();
     this.input.keyboard.on('keydown', (event) => this._handleInventoryKeys(event));
+    // Ayar değişince tuşları yeniden bağla (panel kapandığında temizlenir).
+    this._settingsUnsubscribe = onSettingsChange(() => this._rebindKeys());
+  }
+
+  // Tuş event adları Phaser'da 'keydown-<KeyCodes adı>' biçimindedir.
+  _attachAllKeys() {
+    this._attached = {};
+    for (const [action, handler] of Object.entries(this._keyHandlers)) {
+      const name = getSettings().keys[action];
+      const eventName = 'keydown-' + name;
+      this.input.keyboard.on(eventName, handler);
+      this._attached[action] = { eventName, handler };
+    }
+  }
+
+  _rebindKeys() {
+    for (const { eventName, handler } of Object.values(this._attached || {})) {
+      this.input.keyboard.removeListener(eventName, handler);
+    }
+    this._attachAllKeys();
   }
 
   // Sayı yaz + Enter: seçili slottan o kadar eşya yere bırakılır.
@@ -253,7 +285,7 @@ export class MainScene extends Phaser.Scene {
   // --- Frame döngüsü ---
 
   update(time, delta) {
-    if (this.player && !this.menuOpen && !this.inventoryOpen) {
+    if (this.player && !this.menuOpen && !this.inventoryOpen && !this.settingsOpen) {
       // Katmanlar önce tazelenir: çarpışma çözümü güncel collider'larla yapılmalı.
       this._updateLayers();
       this.player.update();
@@ -264,7 +296,9 @@ export class MainScene extends Phaser.Scene {
     }
     this.interactions.updateHover(this.drops);
     this.updateClickEffects();
+    this.ground.updateWater(time);
     this.dayNight.update(delta);
+    this.ambience.update(delta);
     if (this.inventoryView.isOpen) this.refreshUi();
   }
 

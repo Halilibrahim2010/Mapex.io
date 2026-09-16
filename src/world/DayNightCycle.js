@@ -1,10 +1,15 @@
 // Simple day/night cycle: a dark overlay above the world, below the UI.
 export const NIGHT_OVERLAY_DEPTH = 5000; // world window is ~3000+, UI_DEPTH = 10000
-export const NIGHT_MAX_ALPHA = 0.95;
+export const NIGHT_MAX_ALPHA = 0.975; // gece neredeyse kapkara: fenerler gerçekten işe yarar
 export const DAY_LENGTH_MS = 15 * 60 * 1000; // one full in-game day = 15 real minutes
 export const START_HOUR = 10;
 export const TIME_SKIP_FACTOR = 40;   // Shift basılıyken zaman kaç kat hızlı akar
-export const LIGHT_RADIUS = 65;       // gece karakter etrafındaki tam aydınlık yarıçapı (px)
+export const LIGHT_RADIUS = 38;       // oyuncunun kendi ışığı: dar ve gerçekçi bir çekirdek
+export const LIGHT_FALLOFF = 1.8;     // yumuşak geçişin çekirdeğe oranı
+// Fener ışığının sıcak turuncu parıltısı (karanlık delmenin üstüne eklenir).
+export const LAMP_GLOW_COLOR = 'rgba(255, 170, 80, 0.14)';
+
+import { getSettings, onSettingsChange, keyCodeName } from '../core/GameSettings.js';
 
 // Hours where darkness transitions happen.
 const SUNRISE_START = 5, SUNRISE_END = 7;
@@ -20,6 +25,15 @@ export class DayNightCycle {
     this.syncedTime = null;
     this._skipAccumulator = 0;
     this._skipSendTimer = 0;
+    this._unbindSettings = null;
+  }
+
+  // Zaman hızlandırma tuşu Ayarlar'dan gelir; atama değişince yeniden bağlanır.
+  _bindTimeSkipKey() {
+    if (this.fastForwardKey) this.scene.input.keyboard.removeKey(this.fastForwardKey);
+    const name = getSettings().keys.timeSkip;
+    const code = Phaser.Input.Keyboard.KeyCodes[name] || Phaser.Input.Keyboard.KeyCodes.SHIFT;
+    this.fastForwardKey = this.scene.input.keyboard.addKey(code);
   }
 
   // Sunucudan gelen saat: herkeste aynı (deterministik).
@@ -51,7 +65,8 @@ export class DayNightCycle {
       fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(NIGHT_OVERLAY_DEPTH + 1);
-    this.fastForwardKey = this.scene.input.keyboard.addKey('SHIFT');
+    this._bindTimeSkipKey();
+    this._unbindSettings = onSettingsChange(() => this._bindTimeSkipKey());
     this.refreshSize();
   }
   _createNightCanvas(w, h) {
@@ -127,8 +142,8 @@ export class DayNightCycle {
     if (this.scene.player) {
       const sx = this.scene.player.x - cam.scrollX;
       const sy = this.scene.player.y - cam.scrollY;
-      const R = LIGHT_RADIUS;      // tam aydınlık çekirdek
-      const R_OUTER = R * 2.0;     // yumuşak geçişin bittiği nokta
+      const R = LIGHT_RADIUS;          // dar, gerçekçi çekirdek
+      const R_OUTER = R * LIGHT_FALLOFF;
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'destination-out';
       const grad = ctx.createRadialGradient(sx, sy, R, sx, sy, R_OUTER);
@@ -141,24 +156,38 @@ export class DayNightCycle {
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    // Fenerler: küçük, hafif bir ışıltı (karanlığın yarısını bile açmaz).
+    // Fenerler: karanlığı belirgin biçimde delen güçlü bir ışık +
+    // sıcak turuncu bir parıltı (gerçek sokak lambası hissi).
     const lights = this.scene.layer ? this.scene.layer.lights : null;
     if (lights) {
-      ctx.globalCompositeOperation = 'destination-out';
       for (const light of lights.values()) {
         const sx = light.x - cam.scrollX;
         const sy = light.y - cam.scrollY;
         const radius = light.radius;
         if (sx < -radius * 2 || sy < -radius * 2 || sx > w + radius * 2 || sy > h + radius * 2) continue;
-        const grad = ctx.createRadialGradient(sx, sy, 6, sx, sy, radius);
+        // 1) Karanlığı delme (şeffaflaştırma).
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.globalAlpha = 1;
+        const grad = ctx.createRadialGradient(sx, sy, radius * 0.15, sx, sy, radius);
         grad.addColorStop(0, `rgba(0,0,0,${light.strength})`);
+        grad.addColorStop(0.55, `rgba(0,0,0,${light.strength * 0.55})`);
         grad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(sx, sy, radius, 0, Math.PI * 2);
         ctx.fill();
+        // 2) Sıcak ışıma: karanlığın üstüne çok hafif turuncu katman.
+        ctx.globalCompositeOperation = 'source-over';
+        const glow = ctx.createRadialGradient(sx, sy, 2, sx, sy, radius * 0.7);
+        glow.addColorStop(0, LAMP_GLOW_COLOR);
+        glow.addColorStop(1, 'rgba(255,170,80,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(sx, sy, radius * 0.7, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = nightness * NIGHT_MAX_ALPHA;
     }
     this.nightTex.refresh();
     this.clockText.setText(this.formatClock());

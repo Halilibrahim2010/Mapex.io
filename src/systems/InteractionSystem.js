@@ -1,6 +1,8 @@
 // Veri odaklı nesne sistemi: toplanabilir nesne arama ve kesme (hold)
 // etkileşimi + çarpışma çözümü. Hedef türleri JSON'daki "interaction"
 // alanından gelir (hold | pickup); kodda tür adı geçmez.
+import { getObjectDef } from '../core/ObjectDefs.js';
+
 const FEET_OFFSET = 34;
 const PLAYER_RADIUS = 12;
 
@@ -17,14 +19,17 @@ export class InteractionSystem {
   }
 
   // Tek hover metni: toplanabilir nesne veya yerdeki eşya (aynı görsel dil).
+  // Kayıt türüne göre konum alanı değişir: dünya nesnesi data.x/y, drop x/y.
   showHover(source, record, label) {
+    const x = record.x === undefined ? record.data.x : record.x;
+    const y = record.y === undefined ? record.data.y : record.y;
     if (!this.hoverText) {
-      this.hoverText = this.scene.add.text(record.x, record.y - 30, label, {
+      this.hoverText = this.scene.add.text(x, y - 30, label, {
         fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#ffe9b0',
         stroke: '#000000', strokeThickness: 2
       }).setOrigin(0.5).setDepth(9500);
     } else {
-      this.hoverText.setPosition(record.x, record.y - 30).setText(label).setVisible(true);
+      this.hoverText.setPosition(x, y - 30).setText(label).setVisible(true);
     }
     this.hoverRecord = record;
     this.hoverSource = source;
@@ -80,12 +85,24 @@ export class InteractionSystem {
       this.showHover('drop', staged.record, staged.label);
       return;
     }
+    const drop = drops ? drops.nearest() : null;
+    if (drop) {
+      const def = this._dropDef(drop.itemId);
+      if (def) {
+        this.showHover('drop', drop, def.stackLabel || def.name);
+        return;
+      }
+    }
     const record = this.nearestPickup(60);
     if (!record) {
       this.hideHover();
       return;
     }
     this.showHover('object', record, record.def.stackLabel || record.def.name);
+  }
+
+  _dropDef(itemId) {
+    return getObjectDef(itemId);
   }
 
   // E tuşu: önce yerdeki eşya, sonra dünyadaki toplanabilir nesne.
@@ -156,7 +173,7 @@ export class InteractionSystem {
 
   // Her frame: hold süresi dolunca nesne kırılır.
   update(deltaMs) {
-    if (this.scene.menuOpen || this.scene.inventoryOpen) {
+    if (this.scene.menuOpen || this.scene.inventoryOpen || this.scene.settingsOpen) {
       if (this.holdTarget) this.cancel();
       else if (this.scene.player) this.scene.player.setChopping(false);
       return;

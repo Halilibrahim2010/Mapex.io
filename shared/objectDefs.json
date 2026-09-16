@@ -29,7 +29,7 @@
 
   "terrain": {
     "ground": { "atlas": "assets/Tiles0/FieldsTile_{n}.png", "n": 38 },
-    "water": { "deep": "#1b3f5e", "mid": "#2a6293", "shallow": "#3f83b5", "foam": "#cfe8f2" },
+    "water": { "deep": "#2e6da4", "mid": "#418fc0", "shallow": "#63b3d9", "foam": "#d9f0f7" },
     "grass": {
       "atlas": "assets/Objects/Grass/{n}.png",
       "variants": 6,
@@ -112,8 +112,8 @@
       "kind": "decor",
       "interaction": "none",
       "shape": { "w": 1, "h": 1 },
-      "light": { "radius": 55, "strength": 0.5 },
-      "sprite": { "atlas": "assets/Objects/Decor/Lamp{n}.png", "n": 1, "depth": 2, "originY": 0.85 },
+      "light": { "radius": 160, "strength": 0.9 },
+      "sprite": { "atlas": "assets/Objects/Decor/Lamp{n}.png", "n": 1, "depth": 2, "originY": 0.85, "display": 2.2 },
       "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 2, "offsetY": 14, "width": 22, "height": 10, "alpha": 0.45 },
       "spawn": { "chance": 0.06, "cells": 1, "salt": 4, "bigOnly": false, "size": "small" }
     }
