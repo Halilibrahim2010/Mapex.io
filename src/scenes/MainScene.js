@@ -21,10 +21,24 @@ import { PauseMenu } from '../ui/PauseMenu.js';
 import { InventoryView } from '../ui/InventoryView.js';
 import { Inventory } from '../core/Inventory.js';
 import { SettingsPanel } from '../ui/SettingsPanel.js';
-import { getSettings, onSettingsChange } from '../core/GameSettings.js';
+import { UI_DEPTH } from '../ui/uiDepth.js';
+import { getSettings, onSettingsChange, keyCodeName } from '../core/GameSettings.js';
+import { ChatService } from '../chat/ChatService.js';
+import { ChatBox } from '../chat/ChatBox.js';
+import { ChatNotice } from '../chat/ChatNotice.js';
 
 const CURSOR_TIP_OFFSET_X = -6;
 const CURSOR_TIP_OFFSET_Y = -10;
+
+// 'Enter' gibi adları Phaser'ın tuş adlarına çevirir (ayarlarda öyle saklanır).
+const KEY_NAME_ALIASES = { Enter: 'ENTER', Escape: 'ESC', ' ': 'SPACE' };
+
+// Klavye olayındaki tuşu ayarlardaki KeyCodes adına çevirir (ör. 'ENTER').
+function keyNameOfEvent(event) {
+  const alias = KEY_NAME_ALIASES[event.key];
+  if (alias) return alias;
+  return keyCodeName(event.keyCode);
+}
 
 export class MainScene extends Phaser.Scene {
   constructor() {
@@ -43,6 +57,7 @@ export class MainScene extends Phaser.Scene {
     this.menuOpen = false;
     this.inventoryOpen = false;
     this.settingsOpen = false;
+    this.chatOpen = false;
     this.sfx = new SoundFX();
 
     this.generator = new WorldGenerator(data.chunkSize, data.tileSize);
@@ -103,6 +118,25 @@ export class MainScene extends Phaser.Scene {
     this.input.on('pointerdown', (pointer) => this._pointerDown(pointer));
     this.input.on('pointerup', () => this.interactions.pointerUp());
     this.input.on('pointermove', (pointer) => this._pointerMove(pointer));
+    // Tek klavye dinleyicisi: sohbet acikken tuslar sohbete, degilse oyuna gider.
+    this.input.keyboard.on('keydown', (event) => this._handleKeydown(event));
+  }
+
+  // Odak sirasi: sohbet > envanter > sohbet kisayolu. Sohbet acikken oyun
+  // tuslari (hareket, envanter, kesme) calismaz; yazi yazma onceliklidir.
+  _handleKeydown(event) {
+    if (this.chatBox && this.chatBox.handleKeydown(event)) return;
+    if (this._handleInventoryKeys(event)) return;
+    this._handleChatToggle(event);
+  }
+
+  _handleChatToggle(event) {
+    if (!this.chatBox) return;
+    if (this.menuOpen || this.settingsOpen) return;
+    const wanted = getSettings().keys.chatOpen;
+    const name = keyNameOfEvent(event);
+    if (!name || name !== wanted) return;
+    this.chatBox.toggle();
   }
 
   _worldPoint(pointer) {
@@ -113,7 +147,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   _pointerDown(pointer) {
-    if (this.menuOpen || this.inventoryOpen || this.settingsOpen) return;
+    if (this.menuOpen || this.inventoryOpen || this.settingsOpen || this.chatOpen) return;
     const point = this._worldPoint(pointer);
     this.chopCursor = { x: point.x + CURSOR_TIP_OFFSET_X, y: point.y + CURSOR_TIP_OFFSET_Y };
     this.spawnClickEffect(this.chopCursor.x, this.chopCursor.y);
@@ -149,6 +183,50 @@ export class MainScene extends Phaser.Scene {
     this.movementSync = new MovementSync(this);
     this.pauseMenu.bindEscapeKey();
     this._bindKeyActions();
+    this._startChat();
+  }
+
+  // Sohbet: servis (ag), pencere (sol altta) ve bildirimler (ustte) birlikte kurulur.
+  _startChat() {
+    this.chat = new ChatService(this);
+    this.chat.setPlayerName(this.playerName);
+    this.chatBox = new ChatBox(this, this.chat.model, (text) => this.chat.send(text));
+    this.chatBox.onOpenStateChange = (open) => this._onChatStateChange(open);
+    this.chatNotice = new ChatNotice(this);
+    this.chat.attach(this.network);
+    this._layoutChatUi();
+    this._chatKeyUnsubscribe = onSettingsChange(() => {
+      this.chat.syncSettings();
+      this._refreshChatShortcuts();
+    });
+  }
+
+  // Pencere açılıp kapanınca: oyun tuşları susturulur, bildirimler temizlenir.
+  _onChatStateChange(open) {
+    this.chatOpen = open;
+    if (open && this.chatNotice) this.chatNotice.clear();
+  }
+
+  // Kısayol ayarı değişince yazı kutusunun ipucu yenilenir.
+  _refreshChatShortcuts() {
+    if (this.chatHint) this.chatHint.setText(this._chatHintText());
+  }
+
+  _chatHintText() {
+    const keys = getSettings().keys;
+    return `${keys.chatOpen}: sohbet   •   ${keys.chatSend}: gönder   •   ESC: kapat   •   #ad: özel   •   @ad: bahset`;
+  }
+
+  // Sohbet penceresi sol alt köşede durur; ekran ölçüsü değişince yeniden yerleşir.
+  _layoutChatUi() {
+    if (!this.chatBox) return;
+    const origin = this.chatBox.origin();
+    if (this.chatHint) this.chatHint.destroy();
+    this.chatHint = this.add.text(origin.x, origin.y - 22, this._chatHintText(), {
+      fontFamily: 'PixelOperator', fontSize: '14px', color: '#8fae8f',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0, 1).setScrollFactor(0).setDepth(UI_DEPTH - 2);
+    if (this.chatBox.open) this.chatBox.rebuild();
   }
 
   // Aksiyon tuşları Ayarlar'dan gelir; ayar değişince tuşlar canlı yeniden bağlanır.
@@ -167,7 +245,6 @@ export class MainScene extends Phaser.Scene {
       }
     };
     this._attachAllKeys();
-    this.input.keyboard.on('keydown', (event) => this._handleInventoryKeys(event));
     // Ayar değişince tuşları yeniden bağla (panel kapandığında temizlenir).
     this._settingsUnsubscribe = onSettingsChange(() => this._rebindKeys());
   }
@@ -191,23 +268,25 @@ export class MainScene extends Phaser.Scene {
   }
 
   // Sayı yaz + Enter: seçili slottan o kadar eşya yere bırakılır.
+  // Tuşu işlediyse true döner (klavye yönlendirmesi buna göre karar verir).
   _handleInventoryKeys(event) {
     const view = this.inventoryView;
-    if (!view.isOpen || view.selectedIndex === null) return;
+    if (!view.isOpen || view.selectedIndex === null) return false;
     if (/^[0-9]$/.test(event.key)) {
       if (view.dropBuffer.length < 3) {
         view.dropBuffer = (view.dropBuffer + event.key).replace(/^0+/, '') || '0';
       }
-      return;
+      return true;
     }
     if (event.key === 'Backspace') {
       view.dropBuffer = view.dropBuffer.slice(0, -1);
-      return;
+      return true;
     }
-    if (event.key !== 'Enter') return;
+    if (event.key !== 'Enter') return false;
     const entry = view.selectedEntry;
     if (entry) this.dropItem(entry.slot.itemId, parseInt(view.dropBuffer, 10) || 0);
     view.dropBuffer = '';
+    return true;
   }
 
   // Envanterden yere bırakma isteği: görsel hemen, doğrulama sunucudan.
@@ -300,6 +379,19 @@ export class MainScene extends Phaser.Scene {
     this.dayNight.update(delta);
     this.ambience.update(delta);
     if (this.inventoryView.isOpen) this.refreshUi();
+    this._updateChat();
+  }
+
+  // Sohbet: yeni mesaj çizimi (throttle) + bekleyen bildirimler.
+  _updateChat() {
+    if (!this.chatBox) return;
+    this.chatBox.update();
+    if (this.chatNotice) this.chatNotice.update();
+    const notes = this.chat.model.takeNotifications();
+    for (const note of notes) {
+      if (this.chatBox.open) continue;  // pencere açıkken bildirim gerekmez
+      this.chatNotice.push(note);
+    }
   }
 
   _syncNetwork() {
@@ -335,6 +427,11 @@ export class MainScene extends Phaser.Scene {
 
   setMenuInfo(text) {
     this.pauseMenu.setInfo(text);
+  }
+
+  // Sohbet açık/kapalı bilgisi: kısayollar bunu kontrol eder.
+  setChatOpen(open) {
+    this.chatOpen = Boolean(open);
   }
 
   // --- Tıklama efekti (büyüyen artı işareti) ---

@@ -127,7 +127,7 @@ await sleep(2500);
 const opened = await openPanelViaMenu();
 check('panel aciliyor', String(opened).includes('"open":true'), String(opened));
 check('oyun durduruluyor (settingsOpen)', String(opened).includes('"settingsOpen":true'), String(opened));
-check('dort tus satiri var', String(opened).includes('"keyRows":4'), String(opened));
+check('alti tus satiri var (4 oyun + 2 sohbet)', String(opened).includes('"keyRows":6'), String(opened));
 
 // Panel ölçüleri MainScene tuvaline göre istemci koordinatına çevrilir.
 const geom = JSON.parse(await evaluate(`(() => {
@@ -164,7 +164,13 @@ check('kaydirici suruklemeyle %80 oldu', Math.abs(afterDrag.master - 0.8) < 0.05
 check('ana ses canli uygulandi', Math.abs(afterDrag.gain - 0.8) < 0.05, afterDrag.gain);
 
 // Tuş atama: gerçek tıkla, sonra gerçek P tuşuna bas.
-const keyBtn = toClient(geom.cw / 2 + 230 - 90, geom.ch / 2 - 235 + 84 + 60 + 78 + 40);
+// Buton konumu sahneden okunur: panel düzeni değişse de test kaymaz.
+const keyBtnProbe = JSON.parse(await evaluate(`(() => {
+  const scene = window.__mapexGame.scene.keys.MainScene;
+  const refs = scene.settingsPanel.keyButtons.pickup;
+  return JSON.stringify({ x: refs.btn.x, y: refs.btn.y });
+})()`));
+const keyBtn = toClient(keyBtnProbe.x, keyBtnProbe.y);
 await click(keyBtn.x, keyBtn.y);
 await sleep(120);
 const listening = await evaluate("String(window.__mapexGame.scene.keys.MainScene.settingsPanel.listeningAction)");

@@ -147,6 +147,15 @@ export class NetworkManager {
     this.emit('timeSkip', { ms });
   }
 
+  // Sohbet: sunucu mesajı doğrular, yayar ve son mesajları saklar.
+  sendChat(kind, text, to) {
+    this.emit('chatSend', { kind, text, to });
+  }
+
+  requestChatHistory() {
+    this.emit('chatRequest');
+  }
+
   update() {
     this.remotePlayers.forEach((remote) => remote.interpolate());
   }

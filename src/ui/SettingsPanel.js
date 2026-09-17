@@ -3,19 +3,30 @@
 // Panel açıkken oyun durur (scene.settingsOpen), bu yüzden tuş atarken karakter
 // hareket etmez ve aksiyonlar tetiklenmez.
 import { UI_DEPTH } from './uiDepth.js';
-import { getSettings, setVolume, setBinding, keyCodeName } from '../core/GameSettings.js';
+import { getSettings, setVolume, setBinding, setChatText, keyCodeName } from '../core/GameSettings.js';
 
 const PANEL_W = 460;
-const PANEL_H = 470;
+const PANEL_H = 620;
 const TRACK_W = 220;   // kaydırıcı rayının genişliği
 const TRACK_H = 8;
 const HIT_H = 26;      // rayın tıklama/sürükleme alanı: kolay tutulsun
+
+// Metin ayarı satırı: tıkla, yaz, Enter/ESC ile bitir (tuş atamakla aynı fikir).
+const TEXT_ROW_W = 240;
+const TEXT_ROW_H = 30;
 
 const KEY_ACTIONS = [
   { action: 'pickup', label: 'Eşya Al' },
   { action: 'inventory', label: 'Envanter' },
   { action: 'dropItem', label: 'Eşya Bırak' },
-  { action: 'timeSkip', label: 'Zaman Hızlandır' }
+  { action: 'timeSkip', label: 'Zaman Hızlandır' },
+  { action: 'chatOpen', label: 'Sohbeti Aç' },
+  { action: 'chatSend', label: 'Mesaj Gönder' }
+];
+
+const CHAT_TEXT_FIELDS = [
+  { key: 'chatName', label: 'Sohbet Adın (boşsa oyuncu adı)' },
+  { key: 'chatMentions', label: 'Ek Bahsetme Kelimeleri (virgüllü)' }
 ];
 
 export class SettingsPanel {
@@ -25,6 +36,8 @@ export class SettingsPanel {
     this.open = false;
     this.listeningAction = null; // tuş beklenen aksiyon adı (null: beklemiyoruz)
     this.keyButtons = {};
+    this.textRows = {};          // sohbet metin ayarları: tıkla-yaz satırları
+    this.editingText = null;     // yazılan metin ayarının anahtarı
     this.onBack = null;
     this._escHandler = null;
     this._activeSlider = null;   // tutulan kaydırıcının uygulama fonksiyonu
@@ -39,6 +52,8 @@ export class SettingsPanel {
     this.onBack = onBack || null;
     this.listeningAction = null;
     this.keyButtons = {};
+    this.textRows = {};
+    this.editingText = null;
 
     const scene = this.scene;
     const cw = scene.cameras.main.width;
@@ -70,6 +85,17 @@ export class SettingsPanel {
       y += 48;
     }
 
+    y += 20;
+    group.add(scene.add.text(cw / 2, y, 'SOHBET', {
+      fontFamily: 'PixelOperator', fontSize: '16px', color: '#4cd964'
+    }).setOrigin(0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0));
+    y += 30;
+
+    for (const field of CHAT_TEXT_FIELDS) {
+      this._addTextRow(field.label, field.key, y);
+      y += 38;
+    }
+
     this._addBackButton(cw / 2, ch / 2 + PANEL_H / 2 - 36);
 
     // Kaydırıcı sürüklemesi sahne seviyesinde izlenir: kol bırakılana kadar
@@ -92,9 +118,11 @@ export class SettingsPanel {
     this.scene.settingsOpen = false;
     this.listeningAction = null;
     this._activeSlider = null;
+    this.editingText = null;
     if (this.group) this.group.destroy(true);
     this.group = null;
     this.keyButtons = {};
+    this.textRows = {};
     if (this._onPointerMove && this.scene.input) {
       this.scene.input.off('pointermove', this._onPointerMove);
       this.scene.input.off('pointerup', this._onPointerUp);
@@ -116,6 +144,13 @@ export class SettingsPanel {
 
   _onKeyDown(event) {
     if (!this.open) return;
+
+    // Metin ayarı yazılıyor: tüm tuşlar satıra gider (ESC vazgeçer).
+    if (this.editingText) {
+      this._editTextKey(event);
+      this._stopEvent(event);
+      return;
+    }
 
     // Tuş atama kipi: ESC iptal eder, diğer tuşlar yeni atama olur.
     if (this.listeningAction) {
@@ -232,6 +267,93 @@ export class SettingsPanel {
     for (const [action, refs] of Object.entries(this.keyButtons)) {
       refs.btnText.setText(s.keys[action]);
     }
+  }
+
+  // --- Sohbet metin ayarları (tıkla-yaz satırı) ----------------------------
+
+  // Tuş atamaya benzer: satıra tıkla, yaz; Enter kaydeder, ESC vazgeçer.
+  _addTextRow(label, key, y) {
+    const scene = this.scene;
+    const cw = scene.cameras.main.width;
+    this.group.add(scene.add.text(cw / 2 - PANEL_W / 2 + 24, y, label, {
+      fontFamily: 'PixelOperator', fontSize: '14px', color: '#8fae8f'
+    }).setOrigin(0, 0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0));
+
+    const box = scene.add.rectangle(cw / 2, y + 18, TEXT_ROW_W, TEXT_ROW_H, 0x0d130d)
+      .setDepth(UI_DEPTH + 2).setScrollFactor(0).setInteractive().setStrokeStyle(1, 0x333333);
+    const boxText = scene.add.text(cw / 2 - TEXT_ROW_W / 2 + 8, y + 18, '', {
+      fontFamily: 'PixelOperator', fontSize: '15px', color: '#ffffff'
+    }).setOrigin(0, 0.5).setDepth(UI_DEPTH + 3).setScrollFactor(0);
+    this.group.add(box);
+    this.group.add(boxText);
+    this.textRows[key] = { box, boxText };
+    this._refreshTextRow(key);
+
+    box.on('pointerover', () => { if (this.editingText !== key) box.setStrokeStyle(1, 0x4cd964); });
+    box.on('pointerout', () => { if (this.editingText !== key) box.setStrokeStyle(1, 0x333333); });
+    box.on('pointerup', () => {
+      if (!this.open) return;
+      this.listeningAction = null;
+      this.editingText = key;
+      this._refreshTextRow(key);
+    });
+  }
+
+  // Düzenlenen satır ayarlardan gelen değer + yazılan son kısmı gösterir.
+  _refreshTextRow(key) {
+    const refs = this.textRows[key];
+    if (!refs) return;
+    if (this.editingText === key) {
+      refs.boxText.setText((this._editBuffer || '') + '_');
+      refs.boxText.setColor('#ffe9b0');
+      refs.box.setStrokeStyle(1, 0x4cd964);
+      return;
+    }
+    const value = getSettings()[key] || '';
+    refs.boxText.setText(value || '(boş)');
+    refs.boxText.setColor(value ? '#ffffff' : '#6f8a6f');
+    refs.box.setStrokeStyle(1, 0x333333);
+  }
+
+  _commitTextEdit() {
+    if (!this.editingText) return;
+    setChatText(this.editingText, this._editBuffer || '');
+    this.editingText = null;
+    this._editBuffer = null;
+  }
+
+  _cancelTextEdit() {
+    this.editingText = null;
+    this._editBuffer = null;
+  }
+
+  _refreshTextRows() {
+    for (const key of Object.keys(this.textRows)) this._refreshTextRow(key);
+  }
+
+  // Metin düzenleme kipinde basılan tuşu işler (true: tuş tüketildi).
+  _editTextKey(event) {
+    if (event.key === 'Enter') {
+      this._commitTextEdit();
+      this._refreshTextRows();
+      return true;
+    }
+    if (event.key === 'Escape') {
+      this._cancelTextEdit();
+      this._refreshTextRows();
+      return true;
+    }
+    if (event.key === 'Backspace') {
+      this._editBuffer = String(this._editBuffer || '').slice(0, -1);
+      this._refreshTextRow(this.editingText);
+      return true;
+    }
+    if (event.key.length === 1) {
+      this._editBuffer = (this._editBuffer || '') + event.key;
+      this._refreshTextRow(this.editingText);
+      return true;
+    }
+    return false;
   }
 
   _addBackButton(x, y) {

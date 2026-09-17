@@ -5,33 +5,42 @@ const STORAGE_KEY = 'mapex.settings.v1';
 const DEFAULTS = {
   masterVolume: 0.8,   // tüm sesler (efektler + ambiyans)
   ambienceVolume: 1,   // ortam sesleri (kuş, cırcır, su)
+  chatName: '',        // sohbette "ben" sayılan ek ad (boşsa oyuncu adı kullanılır)
+  chatMentions: '',    // ek bahsetme kelimeleri, virgülle: "ali,mehmet"
   keys: {
     pickup: 'E',       // eşya al
     inventory: 'I',    // envanter
     dropItem: 'Q',     // eşya bırak
-    timeSkip: 'SHIFT'  // zaman hızlandır
+    timeSkip: 'SHIFT', // zaman hızlandır
+    chatOpen: 'ENTER', // sohbet penceresini aç
+    chatSend: 'ENTER'  // açık sohbette mesajı gönder
   }
 };
 
-let settings = null;
-const listeners = new Set();
+// Metin ayarlarının gerçekten metin olması gerekir (bozuk kayıt düzeltilir).
+function sanitize(saved) {
+  const base = {
+    ...DEFAULTS,
+    ...saved,
+    keys: { ...DEFAULTS.keys, ...((saved && saved.keys) || {}) }
+  };
+  base.chatName = typeof base.chatName === 'string' ? base.chatName : DEFAULTS.chatName;
+  base.chatMentions = typeof base.chatMentions === 'string' ? base.chatMentions : DEFAULTS.chatMentions;
+  return base;
+}
 
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const saved = JSON.parse(raw);
-      return {
-        ...DEFAULTS,
-        ...saved,
-        keys: { ...DEFAULTS.keys, ...(saved.keys || {}) }
-      };
-    }
+    if (raw) return sanitize(JSON.parse(raw));
   } catch (e) {
     // Okuma başarısız (gizli mod vb.): varsayılanlarla devam et.
   }
-  return { ...DEFAULTS, keys: { ...DEFAULTS.keys } };
+  return sanitize(null);
 }
+
+let settings = null;
+const listeners = new Set();
 
 export function getSettings() {
   if (!settings) settings = load();
@@ -73,6 +82,15 @@ export function setBinding(action, keyName) {
 export function onSettingsChange(fn) {
   listeners.add(fn);
   return () => listeners.delete(fn);
+}
+
+// Sohbet için metin ayarı: adı "ben" sayılan ek ad veya ek bahsetme kelimeleri.
+export function setChatText(key, value) {
+  const s = getSettings();
+  if (key !== 'chatName' && key !== 'chatMentions') return;
+  s[key] = typeof value === 'string' ? value.slice(0, 120) : '';
+  save();
+  notify();
 }
 
 // keyCode → KeyCodes adı ('E', 'SHIFT'...). Tuş yakalama için kullanılır.
