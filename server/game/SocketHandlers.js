@@ -2,6 +2,7 @@
 // olayları bağlar ve yayınlar. İstemci ile sunucu aynı shared/objectDefs.json'u
 // kullanır; sunucu yalnızca değişiklikleri (removed + drops) tutar.
 const GameData = require('./GameData');
+const { ChatStore } = require('./ChatStore');
 
 // Oyuncu kimliği: envanter ve istatistikler bu anahtarla saklanır. Şimdilik
 // geçici olarak IP adresi kullanılır (aynı isimde iki oyuncu birbirinin
@@ -17,6 +18,9 @@ function trackerIdOf(socket) {
 }
 
 function attachSocketHandlers(io, world, store, clock, players) {
+  // Sohbet tek bir depoda tutulur: sunucu geçmişin ve doğrulamanın sahibidir.
+  const chat = new ChatStore();
+
   io.on('connection', (socket) => {
     players.create(socket.id);
     socket.emit('currentPlayers', players.all());
@@ -93,6 +97,29 @@ function attachSocketHandlers(io, world, store, clock, players) {
     });
 
     socket.on('timeSkip', (data) => clock.skip(data && data.ms));
+
+    // Sohbet: mesaj doğrulanır (boş/uzun/spam reddedilir), sonra yayılır.
+    // Genel mesaj herkese, özel mesaj yalnızca hedef oyuncuya gider.
+    socket.on('chatSend', (data) => {
+      const player = players.get(socket.id);
+      const message = chat.sanitize(data, player);
+      if (!message) return;
+      if (message.kind !== 'private') {
+        io.emit('chatMessage', message);
+        return;
+      }
+      for (const [id, target] of Object.entries(players.all())) {
+        if (target.name !== message.to) continue;
+        io.to(id).emit('chatMessage', message);
+      }
+    });
+
+    // Yeniden bağlanan istemci son mesajları ister: sohbet boş görünmesin.
+    socket.on('chatRequest', () => {
+      const player = players.get(socket.id);
+      if (!player) return;
+      socket.emit('chatHistory', chat.historyFor(player));
+    });
 
     socket.on('disconnect', () => {
       players.remove(socket.id);

@@ -61,6 +61,7 @@ function makeDisplayObject(x, y, extra) {
     setInteractive() { this.interactive = true; return this; },
     setOrigin() { return this; },
     setText(text) { this.text = text; return this; },
+    setColor(color) { this.color = color; return this; },
     setPosition(px, py) { this.x = px; this.y = py; return this; },
     setFillStyle() { return this; },
     setStrokeStyle() { return this; },
@@ -183,7 +184,18 @@ scenePointerUp();
 
 // Tuş atama: butona tıkla, sonra yeni tuşa bas.
 const keyButtons = created.rects.filter((r) => r.w === 70 && r.h === 30);
-check('dort tus butonu var', keyButtons.length === 4, keyButtons.length);
+check('alti tus butonu var (4 oyun + 2 sohbet)', keyButtons.length === 6, keyButtons.length);
+
+// Sohbet kısayolları varsayılan ENTER olarak panelde görünür.
+const enterLabels = created.texts.filter((t) => t.text === 'ENTER');
+check('sohbet kisayollari ENTER varsayilaniyla gorunur', enterLabels.length === 2, enterLabels.length);
+
+// Sohbet metin ayarı satırları: chatName + chatMentions (240x30 kutu).
+const textBoxes = created.rects.filter((r) => r.w === 240 && r.h === 30);
+check('iki sohbet metin ayari satiri var', textBoxes.length === 2, textBoxes.length);
+check('metin satirlari bos durumda ipucu gosterir',
+  created.texts.filter((t) => t.text === '(boş)').length === 2,
+  created.texts.map((t) => t.text).join('|'));
 
 keyButtons[0].fire('pointerup');
 check('tus bekleniyor durumuna gecti', panel.listeningAction === 'pickup', panel.listeningAction);

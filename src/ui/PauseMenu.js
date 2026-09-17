@@ -44,6 +44,8 @@ export class PauseMenu {
       // Ayarlar paneli açıkken ESC'yi o panel yönetir; panel az önce ESC ile
       // kapandıysa bu basımı menü tekrar kapatmasın diye yok sayarız.
       if (this.scene.settingsOpen) return;
+      // Sohbet açıkken ESC sohbeti kapatır: pause menü açılmaz.
+      if (this.scene.chatOpen) return;
       if (performance.now() - (this.scene.escConsumedAt || 0) < 150) return;
       if (this.scene.inventoryOpen == true) {
         this.scene.toggleInventory();

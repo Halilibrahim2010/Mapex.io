@@ -12,6 +12,8 @@ export class LocalServer {
     this.drops = [];
     this.dropSeq = 0;
     this.startedAt = Date.now();
+    // Tek kişilik modda sohbet: mesajlar yalnızca bu istemcide tutulur.
+    this.chatLog = [];
   }
 
   // NetworkManager ile aynı arayüz: olay dinleyicileri burada tutulur.
@@ -51,9 +53,32 @@ export class LocalServer {
       case 'objectRemoved':
         this._fire('inventoryState', this._snapshot());
         break;
+      case 'chatSend':
+        this._chatSend(data);
+        break;
+      case 'chatRequest':
+        this._fire('chatHistory', this.chatLog.slice());
+        break;
       default:
         break;
     }
+  }
+
+  // Yerel modda sunucu yok: kendi mesajımızı yalnizca kendimize yayınlarız.
+  _chatSend(data) {
+    if (!data || !data.text) return;
+    const entry = {
+      id: this.chatLog.length + 1,
+      kind: data.kind === 'private' ? 'private' : 'chat',
+      fromId: null,
+      from: data.kind === 'private' ? (data.to || 'Oyuncu') : 'Oyuncu',
+      to: data.kind === 'private' ? (data.to || null) : null,
+      text: String(data.text).slice(0, 140),
+      at: Date.now()
+    };
+    this.chatLog.push(entry);
+    if (this.chatLog.length > 50) this.chatLog.shift();
+    this._fire('chatMessage', entry);
   }
 
   _timeState() {

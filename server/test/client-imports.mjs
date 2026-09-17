@@ -32,6 +32,9 @@ const modules = [
   'src/core/Inventory.js',
   'src/core/WorldGenerator.js',
   'src/core/StartRequest.js',
+  'src/chat/ChatTypes.js',
+  'src/chat/ChatModel.js',
+  'src/chat/ChatService.js',
   'src/scenes/PreloadScene.js',
   'src/scenes/MainScene.js'
 ];
