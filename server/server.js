@@ -7,6 +7,9 @@ const { GameWorld } = require('./game/GameWorld');
 const { GameClock, PlayerRegistry } = require('./game/GameClock');
 const { InventoryStore } = require('./game/InventoryStore');
 const { attachSocketHandlers } = require('./game/SocketHandlers');
+const { createAuthLayer, tryCreatePrismaClient } = require('./auth');
+const { PrismaUserRepository } = require('./auth/PrismaUserRepository');
+const { createAuthRouter, limiterResetRoute } = require('./auth/routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,13 +20,26 @@ app.use(express.static(CLIENT_ROOT));
 // İstemci ve sunucu aynı tanım dosyasını okur (tek doğruluk kaynağı).
 app.use('/shared', express.static(path.join(CLIENT_ROOT, 'shared')));
 
+// Auth katmanı tamamen bağımsız kurulur: veritabanı varsa Prisma, yoksa bellek.
+// Oyun çekirdeği bu katmanın varlığından habersizdir; yalnızca oturum nesnesini
+// tüketir. Veritabanı olmadan da sunucu eksiksiz çalışır (misafir modu).
+const prisma = tryCreatePrismaClient();
+const authLayer = createAuthLayer({
+  repository: prisma ? new PrismaUserRepository(prisma) : undefined,
+  mode: prisma ? 'prisma' : 'memory'
+});
+app.use('/auth', createAuthRouter(authLayer));
+// Test kancası: yalnızca MAPEX_ALLOW_TEST_HOOKS=1 iken çalışır.
+app.get('/auth/__reset-limits', limiterResetRoute(authLayer));
+console.log(`[auth] oturum katmanı hazır (${authLayer.mode})`);
+
 const world = new GameWorld();
 const store = new InventoryStore(world);
 const players = new PlayerRegistry();
 const clock = new GameClock(io);
 
 clock.start();
-attachSocketHandlers(io, world, store, clock, players);
+attachSocketHandlers(io, world, store, clock, players, authLayer);
 
 const PORT = process.env.PORT || 3019;
 server.listen(PORT, () => console.log(`mapex.io sunucu ${PORT} portunda çalışıyor`));

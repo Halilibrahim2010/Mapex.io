@@ -29,7 +29,10 @@ async function findPage() {
   for (let i = 0; i < 40; i++) {
     try {
       const list = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
-      const page = list.find((t) => t.type === 'page');
+      // Uzantı/devtools sayfaları elenir: yanlış hedefe bağlanmak testi asardı.
+      const page = list.find((t) => t.type === 'page'
+        && !String(t.url || '').startsWith('chrome-extension://')
+        && !String(t.url || '').startsWith('devtools://'));
       if (page) return page;
     } catch (error) { /* henüz hazır değil */ }
     await sleep(250);

@@ -1,0 +1,115 @@
+// PostgreSQL şeması — Prisma.
+//
+// Tasarım kararları:
+//  1) Ekonomi "ledger" (defter) ile birlikte tutulur: gold/gems alanları hızlı
+//     okuma için bakiye taşır, wallet_transactions her değişimin izini tutar.
+//     Böylece "neden 500 altınım var" sorusu her zaman cevaplanabilir.
+//  2) Bakiyeler Int: 2.1 milyar tavanı oyun ekonomisi için fazlasıyla yeterli ve
+//     JS number ile birebir uyumlu (BigInt serileştirme sorunu çıkmaz).
+//     xp için BigInt kullanılır (uzun vadeli ilerleme).
+//  3) Envanterde (user_id, item_id) tekildir: aynı eşyadan iki satır olamaz.
+//     Bu, race condition'ı veritabanı seviyesinde keser.
+//
+// Kurulum:
+//   cd server
+//   npm i -D prisma && npm i @prisma/client
+//   npx prisma migrate dev --name init
+//   npx prisma generate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- 1. Kullanıcı ve hesap yapısı ------------------------------------------
+
+enum Role {
+  player
+  premium
+  admin
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  username      String   @unique @db.VarChar(15)
+  passwordHash  String   @map("password_hash")
+  role          Role     @default(player)
+  isVerified    Boolean  @default(false) @map("is_verified")
+  createdAt     DateTime @default(now()) @map("created_at")
+  lastLogin     DateTime? @map("last_login")
+  createdIp     String?  @map("created_ip") @db.VarChar(64)
+
+  // --- 2. Ekonomi ve ilerleme (hızlı okunan bakiye alanları) ---
+  gold          Int      @default(0)
+  gems          Int      @default(0)
+
+  // --- İlişkiler ---
+  progress      UserProgress?
+  inventory     UserInventory[]
+  sessions      UserSession[]
+  transactions  WalletTransaction[]
+
+  @@map("users")
+}
+
+model UserProgress {
+  userId    String   @id @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level     Int      @default(1)
+  xp        BigInt   @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_progress")
+}
+
+// --- 3. Envanter sistemi ---------------------------------------------------
+
+model UserInventory {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String   @map("item_id") @db.VarChar(64)
+  itemType   String   @map("item_type") @db.VarChar(32)
+  count      Int      @default(1)
+  acquiredAt DateTime @default(now()) @map("acquired_at")
+
+  // Aynı kullanıcı + aynı eşya tek satır: stok artışı UPDATE ile yapılır.
+  @@unique([userId, itemId])
+  @@index([userId, itemType])
+  @@map("user_inventory")
+}
+
+// --- Oturumlar ve denetim --------------------------------------------------
+
+model UserSession {
+  id         String   @id @db.Uuid // Jeton içindeki "sid" (iptal için)
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip         String?  @db.VarChar(64)
+  userAgent  String?  @map("user_agent") @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+  expiresAt  DateTime @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  @@index([userId])
+  @@map("user_sessions")
+}
+
+model WalletTransaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency  String   @db.VarChar(8) // 'gold' | 'gems'
+  delta     Int      // + kazanç, - harcama
+  balance   Int      // işlem sonrası bakiye (denetim izi)
+  reason    String   @db.VarChar(64) // 'harvest' | 'purchase' | 'admin' ...
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("wallet_transactions")
+}

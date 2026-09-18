@@ -5,10 +5,14 @@ import { ANIM_STATE } from '../entities/AnimState.js';
 const SERVER_URL = 'http://' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost') + ':3019';
 
 export class NetworkManager {
-  constructor(scene, name = 'Oyuncu', char = 1) {
+  constructor(scene, name = 'Oyuncu', char = 1, session = null) {
     this.scene = scene;
     this.name = name;
     this.char = char || 1;
+    // Oturum dışarıdan enjekte edilir: bu sınıf hesap sistemini import etmez.
+    // Yalnızca iki bilgiyi kullanır: jeton (kimlik) ve displayName (etiket).
+    this.session = session;
+    this.sessionToken = session && session.token ? session.token : null;
     this.remotePlayers = new Map();
     // Sunucu yoksa yerel mod aynı olayları üretir; oyun tek kişilik devam eder.
     this.socket = this._connect();
@@ -52,8 +56,15 @@ export class NetworkManager {
 
   _bindEvents() {
     this.on('connect', () => {
-      // trackerId gönderilmez: envanter kimliğini sunucu IP'den belirler.
-      this.emit('hello', { name: this.name, char: this.char });
+      // sessionToken: kayıtlı oyuncunun oturumu sunucuda çözülür. Jeton yoksa
+      // sunucu misafir oturumu atar; yani bu alan opsiyoneldir.
+      this.emit('hello', { name: this.name, char: this.char, sessionToken: this.sessionToken });
+    });
+
+    // Sunucu oturumu (misafir mi, kayıtlı mı) bu olayla bildirir. Oyun kodu
+    // tip ayrımı yapmaz; sahne yalnızca HUD için veriyi iletir.
+    this.on('sessionState', (state) => {
+      if (this.scene.applySessionState) this.scene.applySessionState(state);
     });
 
     this.on('currentPlayers', (players) => {

@@ -25,6 +25,15 @@ function connect(name) {
   });
 }
 
+// Sohbet gönderimi: sunucuda 300 ms spam koruması vardır (bilinçli tasarım).
+// Test mesajları bu yüzden aralıklı gönderilir; aksi halde mesaj sunucu
+// tarafından reddedilir ve test yanlışlıkla başarısız olur.
+const SPAM_WINDOW_MS = 350;
+async function send(player, payload) {
+  player.socket.emit('chatSend', payload);
+  await sleep(SPAM_WINDOW_MS);
+}
+
 async function main() {
   const a = await connect('Ahmet');
   const b = await connect('Mehmet');
@@ -33,7 +42,7 @@ async function main() {
   b.events.chatMessage.length = 0;
   a.events.chatMessage.length = 0;
   a.socket.emit('chatSend', { kind: 'chat', text: 'herkese selam' });
-  await sleep(300);
+  await sleep(400);
   check('genel mesaj gönderene geri döndü', a.events.chatMessage.length === 1,
     JSON.stringify(a.events.chatMessage));
   check('genel mesaj karşı tarafa ulaştı', b.events.chatMessage.length === 1,
@@ -42,16 +51,13 @@ async function main() {
     b.events.chatMessage[0]?.from);
 
   // --- 2. Özel mesaj: yalnızca hedef ---------------------------------------
-  await sleep(350);
+  await sleep(SPAM_WINDOW_MS);
   await connect('Hasan'); // üçüncü oyuncu: özel mesajı görmemeli
   await sleep(400);
-  const hasan = null;
-  void hasan;
 
   b.events.chatMessage.length = 0;
   a.events.chatMessage.length = 0;
-  a.socket.emit('chatSend', { kind: 'private', to: 'Mehmet', text: 'gizli mesaj' });
-  await sleep(300);
+  await send(a, { kind: 'private', to: 'Mehmet', text: 'gizli mesaj' });
   check('özel mesaj hedefe ulaştı', b.events.chatMessage.length === 1,
     JSON.stringify(b.events.chatMessage));
   check('özel mesaj türü doğru', b.events.chatMessage[0]?.kind === 'private',
@@ -72,23 +78,20 @@ async function main() {
 
   // --- 4. Doğrulama: boş metin ve hatalı paket yayınlanmamalı --------------
   b.events.chatMessage.length = 0;
-  a.socket.emit('chatSend', { kind: 'chat', text: '   ' });
-  await sleep(250);
+  await send(a, { kind: 'chat', text: '   ' });
   check('boş mesaj yayınlanmadı', b.events.chatMessage.length === 0,
     JSON.stringify(b.events.chatMessage));
 
   // --- 5. Uzun metin kırpılır (140 karakter) -------------------------------
   b.events.chatMessage.length = 0;
-  a.socket.emit('chatSend', { kind: 'chat', text: 'x'.repeat(400) });
-  await sleep(300);
+  await send(a, { kind: 'chat', text: 'x'.repeat(400) });
   const longMessage = b.events.chatMessage.find((m) => m.text.startsWith('xxx'));
   check('uzun mesaj 140 karaktere kırpıldı', longMessage && longMessage.text.length === 140,
     longMessage ? String(longMessage.text.length) : 'paket yok');
 
   // --- 6. Hedefi olmayan özel mesaj yayınlanmaz ----------------------------
   b.events.chatMessage.length = 0;
-  a.socket.emit('chatSend', { kind: 'private', to: 'Kimse', text: 'kimseye' });
-  await sleep(300);
+  await send(a, { kind: 'private', to: 'Kimse', text: 'kimseye' });
   check('olmayan hedefe özel mesaj gitmedi', b.events.chatMessage.length === 0,
     JSON.stringify(b.events.chatMessage));
 

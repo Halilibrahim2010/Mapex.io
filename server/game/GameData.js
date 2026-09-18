@@ -38,6 +38,13 @@ function isKnownItem(id) {
   return Boolean(def(id) && def(id).kind === 'resource');
 }
 
+// Envanter kaydındaki item_type alanı için: tanımdaki "kind" (resource,
+// harvestable...) yoksa 'misc'. Veritabanına yazılan tek resmi tür kaynağı.
+function typeOfItem(id) {
+  const d = def(id);
+  return (d && d.kind) || 'misc';
+}
+
 function stackLimit(id) {
   const d = def(id);
   return d && d.maxStack ? d.maxStack : 0;
@@ -95,6 +102,7 @@ module.exports = {
   data,
   objects,
   def,
+  typeOfItem,
   removableIds,
   isKnownItem,
   stackLimit,

@@ -26,6 +26,7 @@ import { getSettings, onSettingsChange, keyCodeName } from '../core/GameSettings
 import { ChatService } from '../chat/ChatService.js';
 import { ChatBox } from '../chat/ChatBox.js';
 import { ChatNotice } from '../chat/ChatNotice.js';
+import { applySessionState } from '../account/index.js';
 
 const CURSOR_TIP_OFFSET_X = -6;
 const CURSOR_TIP_OFFSET_Y = -10;
@@ -95,7 +96,7 @@ export class MainScene extends Phaser.Scene {
 
     // Menü, oyun sahnesi hazır olmadan tıklandıysa bekleyen isteği şimdi uygula;
     // aksi halde sonraki tıklamayı bekle.
-    consumeStartRequest((name, char) => this.startGame(name, char));
+    consumeStartRequest((name, char, session) => this.startGame(name, char, session));
   }
 
   // Doğuş noktası mantığı world/SpawnPoint.js içinde (engel + su kontrolü).
@@ -161,10 +162,13 @@ export class MainScene extends Phaser.Scene {
   }
 
   // Oyuncu adı ve karakteri menüden gelir; ağ bağlantısı burada kurulur.
-  startGame(name, char) {
+  // session: hesap katmanından gelen oturum nesnesi (misafir/kayıtlı/çevrimdışı).
+  // Sahne bu nesnenin TÜRÜNÜ bilmez; yalnızca displayName ve economy okur.
+  startGame(name, char, session) {
     if (this.isStarted) return;
     this.isStarted = true;
-    this.playerName = name || 'Oyuncu';
+    this.session = session || null;
+    this.playerName = (this.session && this.session.displayName) || name || 'Oyuncu';
     const charCount = getCharacters().count;
     const charId = (char && char >= 1 && char <= charCount) ? char : 1;
     this.player.setCharacter(`char${charId}`);
@@ -177,7 +181,7 @@ export class MainScene extends Phaser.Scene {
       .setShadow(1, 1, 'rgba(0, 0, 0, 0.6)', 2)
       .setDepth(10);
 
-    this.network = new NetworkManager(this, this.playerName, charId);
+    this.network = new NetworkManager(this, this.playerName, charId, this.session);
     // Ağ senkronu için gönderilen son değerler (gereksiz paket göndermemek için).
     this.inventoryUi = new InventoryUi(this);
     this.movementSync = new MovementSync(this);
@@ -199,6 +203,22 @@ export class MainScene extends Phaser.Scene {
       this.chat.syncSettings();
       this._refreshChatShortcuts();
     });
+  }
+
+  // Sunucu oturumu çözdüğünde (sessionState olayı) çağrılır. Sahne yalnızca
+  // köprü görevi görür: veriyi oturum katmanına ve HUD'a iletir. "Kayıtlı mı
+  // misafir mi" ayrımı burada YAPILMAZ — adaptörler zaten hallediyor.
+  applySessionState(state) {
+    if (!state) return;
+    // storageKey sunucudan gelir: istemci ve sunucu aynı envanter anahtarını
+    // kullanır (misafirde oturuma özel, kayıtlıda kullanıcı kimliği).
+    applySessionState(state);
+    if (this.session) {
+      this.session.applyState(state);
+      if (state.displayName) this.playerName = state.displayName;
+    }
+    if (this.hud) this.hud.setSession(state.economy ? state : this.session);
+    if (this.sessionBarRefresh) this.sessionBarRefresh();
   }
 
   // Pencere açılıp kapanınca: oyun tuşları susturulur, bildirimler temizlenir.

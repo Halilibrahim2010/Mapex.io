@@ -57,23 +57,24 @@ async function main() {
   check('düşen adedi 1-3', spawned && spawned.drops.length >= 1 && spawned.drops.length <= 3,
     spawned ? String(spawned.drops.length) : '');
 
-  // --- 4. IP tabanlı envanter kimliği: aynı isimle başka bağlantı eşyaları alamaz ---
+  // --- 4. Oturum tabanlı envanter kimliği: her bağlantı kendi envanterini görür ---
   a.socket.emit('pick', { itemId: 'stone' });
   await sleep(200);
   const invA = a.events.inventoryState[a.events.inventoryState.length - 1];
   check('A oyuncusunun taşı var', total(invA, 'stone') >= 1, 'taş: ' + total(invA, 'stone'));
 
-  // "Ahmet" adıyla yeni bir bağlantı: aynı IP olduğu için AYNI envanteri görür
-  // (IP tabanlı olmasının amacı: isim taklidi yapsa bile ayrı envanter açılmaz).
+  // "Ahmet" adıyla yeni bir bağlantı: farklı bir misafir oturumu açılır, bu
+  // yüzden AYRI (boş) bir envanter görür. Bu, eski IP tabanlı kimliğin yerini
+  // alan davranıştır: aynı ağdaki iki oyuncu birbirinin eşyasını göremez.
   const c = await connect('Ahmet');
   const invC0 = c.events.inventoryState[c.events.inventoryState.length - 1];
   const cHasStone = total(invC0, 'stone') >= 1;
-  check('aynı IP farklı isim: ayrı envanter açılmıyor (IP kimliği)', cHasStone,
-    cHasStone ? 'aynı envanter paylaşıldı' : `yeni boş envanter (taş: ${total(invC0, 'stone')})`);
+  check('yeni bağlantı kendi (boş) envanterini alır — oturum izolasyonu', !cHasStone,
+    cHasStone ? 'aynı envanter paylaşıldı (HATA)' : `yeni boş envanter (taş: ${total(invC0, 'stone')})`);
 
   // --- 5. Eşya yere bırakma (Q): envanter azalıyor mu? ---
-  // Not: aynı IP'den bağlanan tüm istemciler aynı envanteri paylaşır (IP kimliği),
-  // bu yüzden mutlak sayı yerine bırakma öncesi/sonrası farkı ölçülür.
+  // Not: her bağlantının kendi oturum envanteri vardır; bırakma yalnızca
+  // kendi envanterini etkiler, bu yüzden öncesi/sonrası farkı ölçülür.
   const beforeDrop = a.events.inventoryState[a.events.inventoryState.length - 1];
   const stoneBefore = total(beforeDrop, 'stone');
   a.events.inventoryState.length = 0;

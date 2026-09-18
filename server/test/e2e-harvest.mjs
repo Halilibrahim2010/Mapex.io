@@ -16,7 +16,9 @@ function connect(name) {
     const events = { playerMoved: [], dropsSpawned: [], inventoryState: [], objectRemoved: [] };
     for (const key of Object.keys(events)) socket.on(key, (data) => events[key].push(data));
     socket.on('connect', () => {
-      socket.emit('hello', { name, char: 1, trackerId: name });
+      // trackerId artık kullanılmıyor: envanter kimliğini sunucu, oturumun
+      // storageKey'inden üretir (misafirde oturuma özel, kayıtlıda kullanıcı kimliği).
+      socket.emit('hello', { name, char: 1 });
       setTimeout(() => resolve({ socket, events }), 400);
     });
   });
@@ -97,14 +99,16 @@ async function main() {
     check('yerden odun toplanınca envantere girdi', false, 'drop üretilemedi');
   }
 
-  // --- 4. Envanterde odun "Odun" adıyla listeleniyor mu? (sunucu itemId döner) ---
+  // --- 4. Aynı bağlantıda tekrar hello: oturum ve envanter KORUNMALI --------
+  // (Sunucu oturumu bağlantı başına bir kez çözer; misafir her hello'da
+  //  envanterini kaybetmemeli.)
   a.events.inventoryState.length = 0;
-  a.socket.emit('hello', { name: 'TestA', char: 1, trackerId: 'TestA' });
-  await sleep(250);
+  a.socket.emit('hello', { name: 'TestA', char: 1 });
+  await sleep(400);
   const finalState = a.events.inventoryState.find((s) => s.slots);
   const hasWoodSlot = Boolean(finalState) && woodCount(finalState) >= 1;
-  check('kalıcı envanterde odun duruyor (taş gibi)', hasWoodSlot,
-    finalState ? `slotlar: ${JSON.stringify((finalState.slots || []).filter(Boolean))}` : '');
+  check('tekrar hello envanteri kaybettirmedi (oturum sabit)', hasWoodSlot,
+    `gelen: ${a.events.inventoryState.length} | slotlar: ${finalState ? JSON.stringify((finalState.slots || []).filter(Boolean)) : 'yok'}`);
 
   // --- 5. Taş toplama da çalışıyor (kontrol) ---
   a.events.inventoryState.length = 0;

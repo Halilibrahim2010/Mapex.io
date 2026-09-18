@@ -35,6 +35,10 @@ const modules = [
   'src/chat/ChatTypes.js',
   'src/chat/ChatModel.js',
   'src/chat/ChatService.js',
+  'src/account/ClientSession.js',
+  'src/account/AuthApi.js',
+  'src/account/SessionProvider.js',
+  'src/ui/AccountRules.js',
   'src/scenes/PreloadScene.js',
   'src/scenes/MainScene.js'
 ];

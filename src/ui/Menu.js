@@ -2,6 +2,8 @@
 // gelir; yeni karakter eklemek için bu dosyaya dokunmak gerekmez.
 // PreloadScene veriyi zaten yüklediyse fetch yapılmaz (tek istek).
 import { ensureGameData, getCharacters } from '../core/ObjectDefs.js';
+import { getSession, onSessionChange } from '../account/index.js';
+import { initAccountPanel, renderSessionBar } from './AccountPanel.js';
 
 const DEFAULT_CHARACTERS = { count: 18, files: ['Character 1.png', 'Character 5.png', 'Character 9.png'], names: ['Savaşçı'] };
 
@@ -56,7 +58,11 @@ export async function initMenu() {
   function startGame() {
     const name = input.value.trim() || 'Oyuncu';
     overlay.style.display = 'none';
-    window.dispatchEvent(new CustomEvent('mapex:start', { detail: { name, char: selectedChar } }));
+    // Oturum da başlangıç isteğiyle taşınır: sahne hesabın ne olduğunu
+    // sorgulamaz, yalnızca hazır oturumu kullanır (bağımlılık yönü tek yönlü).
+    window.dispatchEvent(new CustomEvent('mapex:start', {
+      detail: { name, char: selectedChar, session: getSession() }
+    }));
   }
 
   submitBtn?.addEventListener('click', startGame);
@@ -67,4 +73,10 @@ export async function initMenu() {
 
   // Sağ tık menüsünü engelleme
   document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // Hesap paneli: sekmeler, giriş/kayıt formu ve oturum şeridi. Panel hiç
+  // kullanılmasa da oyun "MİSAFİR" oturumuyla başlar.
+  initAccountPanel();
+  onSessionChange((session) => renderSessionBar(session));
+  renderSessionBar(getSession());
 }

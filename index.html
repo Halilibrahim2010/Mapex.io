@@ -30,6 +30,59 @@
         <button id="name-submit">OYUNA GİR</button>
       </div>
 
+      <!-- HESAP PANELİ: oyundan tamamen bağımsız bir kabuk. Panel boş/kapalı
+           olsa da oyun misafir olarak başlar; hesap sistemi opsiyoneldir. -->
+      <div class="session-bar" id="session-bar">
+        <div class="session-info">
+          <span id="session-name">Oyuncu</span>
+          <span class="session-badge" id="session-badge">MİSAFİR</span>
+        </div>
+        <div class="session-economy">
+          <span id="session-gold">🪙 0</span>
+          <span id="session-gems">💎 0</span>
+          <span id="session-level">★ 1</span>
+        </div>
+        <button id="account-signout">ÇIKIŞ</button>
+      </div>
+
+      <div class="account-tabs">
+        <button class="account-tab active" id="tab-login" data-panel="login">GİRİŞ YAP</button>
+        <button class="account-tab" id="tab-register" data-panel="register">KAYIT OL</button>
+      </div>
+
+      <div class="account-panel active" id="panel-login">
+        <div class="account-field">
+          <label for="login-email">E-posta</label>
+          <input type="email" id="login-email" autocomplete="email" placeholder="ornek@eposta.com" />
+        </div>
+        <div class="account-field">
+          <label for="login-password">Şifre</label>
+          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <button class="account-submit" id="login-submit">GİRİŞ YAP</button>
+      </div>
+
+      <div class="account-panel" id="panel-register">
+        <div id="register-row">
+          <div class="account-field">
+            <label for="register-username">Kullanıcı adı</label>
+            <input type="text" id="register-username" maxlength="15" autocomplete="username" placeholder="3-15 karakter" />
+          </div>
+          <div class="account-field">
+            <label for="register-email">E-posta</label>
+            <input type="email" id="register-email" autocomplete="email" placeholder="ornek@eposta.com" />
+          </div>
+        </div>
+        <div class="account-field">
+          <label for="register-password">Şifre</label>
+          <input type="password" id="register-password" autocomplete="new-password" placeholder="En az 8 karakter" />
+        </div>
+        <button class="account-submit" id="register-submit">KAYIT OL</button>
+        <button class="account-submit ghost" id="guest-continue">MİSAFİR OLARAK DEVAM ET</button>
+      </div>
+
+      <p class="account-message" id="account-message"></p>
+
       <p class="menu-hint">WASD / Ok tuşları: hareket • Basılı sol tık: ağaç kes • I: envanter • ESC: menü</p>
     </div>
   </div>

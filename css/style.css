@@ -195,3 +195,183 @@ body {
   font-size: 12.5px;
   letter-spacing: 0.3px;
 }
+
+/* ============ HESAP PANELİ (Sekmeli) ============ */
+/* Hesap sistemi tamamen ayrı bir kabuk: oyun paneli kaldırılsa da oyun çalışır. */
+.account-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+  border-top: 1px solid #223022;
+  padding-top: 16px;
+}
+
+.account-tab {
+  padding: 9px 20px;
+  border: 1px solid #2c3a2c;
+  border-radius: 9px;
+  background: #0d130d;
+  color: #8fae8f;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.account-tab.active {
+  border-color: #4cd964;
+  background: #142014;
+  color: #c8f7bf;
+}
+
+.account-panel {
+  display: none;
+  text-align: left;
+  margin-top: 16px;
+}
+
+.account-panel.active {
+  display: block;
+}
+
+.account-field {
+  margin-bottom: 12px;
+}
+
+.account-field label {
+  display: block;
+  margin-bottom: 5px;
+  color: #8fae8f;
+  font-size: 12.5px;
+  letter-spacing: 0.4px;
+}
+
+.account-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border-radius: 9px;
+  border: 2px solid #2c3a2c;
+  background: #0d130d;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+}
+
+.account-field input:focus {
+  border-color: #4cd964;
+}
+
+#register-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.account-submit {
+  width: 100%;
+  padding: 12px 24px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #5fe376, #3dbf52);
+  color: #06230c;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 18px rgba(76, 217, 100, 0.24);
+}
+
+.account-submit:hover {
+  filter: brightness(1.08);
+}
+
+.account-submit.ghost {
+  background: transparent;
+  border: 2px solid #2c3a2c;
+  color: #b9d3b9;
+  box-shadow: none;
+  font-size: 13.5px;
+}
+
+.account-submit.ghost:hover {
+  border-color: #4cd964;
+  color: #c8f7bf;
+  filter: none;
+}
+
+.account-message {
+  min-height: 18px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: #8fae8f;
+}
+
+.account-message.error {
+  color: #ff8b8b;
+}
+
+.account-message.ok {
+  color: #7fe89a;
+}
+
+/* Giriş yapmış oyuncu şeridi: isim + kaynak + bakiye + çıkış */
+.session-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 11px 16px;
+  border: 1px solid #2c3a2c;
+  border-radius: 11px;
+  background: #101810;
+}
+
+.session-bar.visible {
+  display: flex;
+}
+
+.session-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #d7ead7;
+}
+
+.session-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: #223022;
+  color: #8fae8f;
+}
+
+.session-badge.account {
+  background: rgba(76, 217, 100, 0.18);
+  color: #a8efb6;
+}
+
+.session-economy {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: #ffe9a8;
+}
+
+#account-signout {
+  padding: 7px 14px;
+  border: 1px solid #3a2c2c;
+  border-radius: 8px;
+  background: transparent;
+  color: #d9a8a8;
+  font-size: 12.5px;
+}
+
+#account-signout:hover {
+  border-color: #ff8b8b;
+  color: #ffb3b3;
+}

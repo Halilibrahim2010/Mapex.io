@@ -2,6 +2,7 @@ import { PreloadScene } from './scenes/PreloadScene.js';
 import { MainScene } from './scenes/MainScene.js';
 import { initMenu } from './ui/Menu.js';
 import { ensureGameData } from './core/ObjectDefs.js';
+import { initAccount } from './account/index.js';
 import './core/StartRequest.js';
 
 // Oyun verisi (shared/objectDefs.json) Phaser başlamadan önce yüklenir; böylece
@@ -17,6 +18,12 @@ async function boot() {
     }
     return;
   }
+
+  // Hesap katmanı oyundan ÖNCE ve oyundan bağımsız çözülür. Sunucu yoksa,
+  // jeton geçersizse veya kayıt yoksa sessizce misafir/çevrimdışı oturuma
+  // düşer; bu fonksiyon asla hata fırlatmaz.
+  const session = await initAccount();
+  console.log(`[hesap] oturum: ${session.kind} (${session.displayName})`);
 
   const config = {
     type: Phaser.AUTO,
