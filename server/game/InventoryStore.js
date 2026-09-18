@@ -49,11 +49,20 @@ class InventoryStore {
     }
   }
 
+  // Kırılan nesneye bağlı sayaçları artırır: kesilen ağaç ve kesilen kütük
+  // aynı eşyayı (odun) verse de ayrı sayaçlarda sayılır (JSON'daki "source").
+  _creditSource(trackerId, kind, amount = 1) {
+    for (const stat of GameData.statsForSource(kind)) {
+      this.stats.applyDelta(trackerId, stat.id, amount);
+    }
+  }
+
   // Kesme tamamlandı: nesne dünyadan düşer ve tanımındaki "drop" eşyası
   // (count..countMax arası rastgele adet) yere serilir. Rastgelelik sunucuda
   // üretilir; böylece tüm istemciler aynı düşenleri görür.
   chop(socketId, kind, id, x, y) {
-    if (!this.stats.idOf(socketId)) return null;
+    const trackerId = this.stats.idOf(socketId);
+    if (!trackerId) return null;
     const ox = Number(x) || 0;
     const oy = Number(y) || 0;
 
@@ -70,6 +79,8 @@ class InventoryStore {
     // Nesne zaten başka istemci tarafından kaldırılmışsa düşenleri yine de ver.
     const removed = this.gameWorld.remove(kind, id);
     if (!removed && drops.length === 0) return null;
+    // Sayaç yalnızca gerçekten kırıldığında artar (çift sayım olmaz).
+    if (removed) this._creditSource(trackerId, kind, 1);
     return { drops };
   }
 

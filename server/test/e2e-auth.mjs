@@ -38,6 +38,11 @@ function connect({ name, token } = {}) {
 async function main() {
   const stamp = Date.now();
 
+  // Hız sınırı IP başına tutulur ve testler aynı IP'den tekrar tekrar
+  // çalışır; sayaç sıfırlanmazsa ikinci koşu 429 alır. Test kancası
+  // MAPEX_ALLOW_TEST_HOOKS=1 değilse 404 döner ve bu adım sessizce geçilir.
+  await fetch(API + '/__reset-limits').catch(() => null);
+
   // --- Kayıtlı oyuncu -----------------------------------------------------
   const registered = await fetch(API + '/register', {
     method: 'POST',
@@ -45,6 +50,10 @@ async function main() {
     body: JSON.stringify({ email: `e2e-${stamp}@example.com`, username: `E2e${String(stamp).slice(-8)}`, password: 'gizli12345' })
   }).then((r) => r.json());
   const token = registered.token;
+  if (!token) {
+    console.error('Kayıt başarısız (sunucu 3019 açık mı? test kancası açık mı?):', registered);
+    process.exit(1);
+  }
 
   const accountPlayer = await connect({ name: 'KayitliOyuncu', token });
   check('kayıtlı oyuncuya sessionState geldi', Boolean(accountPlayer.sessionState));

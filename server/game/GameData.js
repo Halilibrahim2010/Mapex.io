@@ -21,8 +21,16 @@ function emptyStats() {
   return result;
 }
 
+// Kaynak eşyasına göre sayaçlar (toplama sırasında: taş/odun…).
+// "source" alanı olan sayaçlar yalnızca o nesne kırıldığında artar; böylece
+// "Kesilen Ağaç" ve "Kesilen Kütük" aynı eşyayı (wood) verse de ayrı sayılır.
 function statsForResource(itemId) {
-  return stats.filter((stat) => stat.resource === itemId);
+  return stats.filter((stat) => stat.resource === itemId && !stat.source);
+}
+
+// Belirli bir nesne türü kırıldığında artacak sayaçlar (ör. kind='log').
+function statsForSource(kind) {
+  return stats.filter((stat) => stat.source === kind);
 }
 
 // Elenebilir (dünyadan kaldırılabilir) nesneler ve id şeması:
@@ -108,6 +116,7 @@ module.exports = {
   stackLimit,
   emptyStats,
   statsForResource,
+  statsForSource,
   emptyInventory,
   addToInventory,
   removeFromInventory

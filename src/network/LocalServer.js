@@ -94,9 +94,19 @@ export class LocalServer {
   }
 
   // Toplanan kaynağa bağlı sayaçları artırır (JSON'daki "stats" tanımından).
+  // "source" alanı olan sayaçlar yalnızca ilgili nesne kırıldığında artar.
   _creditResource(itemId, amount) {
     for (const stat of statsList()) {
-      if (stat.resource === itemId) this.stats[stat.id] = (this.stats[stat.id] || 0) + amount;
+      if (stat.resource === itemId && !stat.source) {
+        this.stats[stat.id] = (this.stats[stat.id] || 0) + amount;
+      }
+    }
+  }
+
+  // Kırılan nesne türüne bağlı sayaçlar (ağaç / kütük ayrımı).
+  _creditSource(kind, amount = 1) {
+    for (const stat of statsList()) {
+      if (stat.source === kind) this.stats[stat.id] = (this.stats[stat.id] || 0) + amount;
     }
   }
 
@@ -152,6 +162,8 @@ export class LocalServer {
       }
       this.drops.push(...drops);
     }
+    // Sayaç: ağaç ve kütük ayrı sayılır (JSON'daki "source" alanı).
+    this._creditSource(data.kind, 1);
     this._fire('inventoryState', this._snapshot());
     if (drops.length) this._fire('dropsSpawned', { drops });
   }

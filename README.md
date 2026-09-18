@@ -45,25 +45,91 @@ girer, HUD/envanterde görünür ve sunucu tarafında doğrulanır.
 | `kind` | `resource` \| `obstacle` \| `harvestable` \| `decor` |
 | `interaction` | `pickup` (E ile al) \| `hold` (basılı tut, kes) \| `none` |
 | `shape` | Kapladığı karo sayısı (`w`, `h`) |
-| `sprite` | `atlas` içindeki `{n}` yerine sıra numarası/`variants`; `scale`, `display`, `depth`, `origin` |
+| `sprite` | `atlas` içindeki `{n}` yerine sıra numarası/`variants`; `scale`, `display`, `depth`, `origin`, **`groundOffset`** |
+| `shadow` | Zemin gölgesi: `n` (1-6), `offsetY`, `width`, `height`, `alpha` |
 | `spawn` | Deterministik üretim: `chance`, `cells`, `salt`, `bigOnly`, `size`, `texMin`/`texMax` |
-| `harvest` | `holdTime`, `range`, vuruş alanı |
+| `collider` | Çarpışma kutusu: `colliderW` × `colliderH` (piksel), `collider` (karo oranı yedeği) |
+| `harvest` | `holdTime` (saniye), `range`, vuruş alanı |
 | `pickup` | Alma menzili |
-| `drop` | Kırılınca düşen eşya (`itemId`, `count`) |
-| `stump` | Kırıldıktan sonra kalan görsel |
+| `drop` | Kırılınca düşen eşya (`itemId`, `count`, `countMax`) |
+| `stump` | Kırıldıktan sonra kalan görsel (+ isteğe bağlı `shadow`) |
 | `light` | Gece ışığı (`radius`, `strength`) |
+
+### Kütük: tek tür, dört görsel
+
+`log` tanımı ağaçla **aynı kırma akışını** kullanır ama daha kısa sürer:
+
+```json
+"log": {
+  "kind": "harvestable", "interaction": "hold",
+  "sprite": { "atlas": "assets/Objects/Decor/Log{n}.png", "variants": 4, "scale": 1.15,
+              "depth": 2, "collider": 0.5, "colliderOffsetY": 6 },
+  "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 3, "offsetY": 6,
+              "width": 26, "height": 11, "alpha": 0.36 },
+  "harvest": { "holdTime": 5.6, "range": 62, "hitHalfWidth": 26, "shakes": 2 },
+  "drop": { "itemId": "wood", "count": 1, "countMax": 2 }
+}
+```
+
+`variants: 4` sayesinde dört kütük duruşu (eğik yatay `Log1`, eğik dikey `Log2`,
+tam yatay `Log3`, tam dikey `Log4`) **deterministik** olarak rastgele seçilir —
+kaya ve taşla aynı mekanizma, ek kod yok.
+
+**Kırma süresi oranı:** ağaç `holdTime: 8` → kütük `holdTime: 5.6`
+(8 × 0.7). Yani kütük ağaçtan **tam %30 daha hızlı** kırılır. Bu oran
+`assets.test.mjs` içinde kilitlenmiştir; JSON'daki süre değişirse test uyarır.
+
+### Gölge Efekti
+
+`assets/Objects/Shadow/1..6.png` küçükten büyüğe giden yumuşak lekelerdir.
+Hangi nesneye hangisinin yakıştığı JSON'daki `shadow` bloğuyla belirlenir:
+
+| Nesne | Gölge | Neden |
+|---|---|---|
+| `stone` | `1.png` | tek karo, en küçük nesne |
+| `lamp` | `2.png` | ince direk |
+| `log` | `3.png` | tek karo ama uzun gövde |
+| `woodPile` | `4.png` | yığılmış odun |
+| `tree`, `rock` | `6.png` | en geniş kütle (2×2 taç / kaya) |
+
+> `5.png` şu an kullanılmıyor; ara boyut gerekirse hazır duruyor.
+
+Kurallar:
+
+- Gölge her zaman nesnenin **bir alt katmanında** (`depth - 1`) çizilir; ağaç
+  gibi y-sıralı nesnelerde `refreshDepths()` ikisini birlikte günceller.
+- `width`/`height` ile hedef piksel boyutu verilir (`setDisplaySize`), böylece
+  gölgeyi tek bir asset'ten farklı ölçeklerde kullanabilirsiniz.
+- Kırılan nesnenin gölgesi de silinir (sızıntı olmaz); ağaç kütüğünün kendi
+  gölgesi `stump.shadow` ile tanımlanır.
+- `alpha` 0-1 arasıdır; önerilen aralık 0.3-0.45 (daha koyusu yapay durur).
+
+**Yeni nesneye gölge eklemek:** JSON'a tek satır yeter, kod değişmez:
+
+```json
+"shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 4,
+            "offsetY": 8, "width": 30, "height": 12, "alpha": 0.34 }
+```
 
 ### Sayaçlar
 
 Oyun içi istatistikler de JSON'dan gelir (`stats` dizisi):
 
 ```json
-"stats": [ { "id": "chopped", "label": "Kesilen Ağaç", "resource": "wood" } ]
+"stats": [
+  { "id": "chopped", "label": "Kesilen Ağaç", "resource": "wood", "source": "tree" },
+  { "id": "logs",    "label": "Kesilen Kütük", "resource": "wood", "source": "log" }
+]
 ```
 
 `resource` alanı hangi kaynağın bu sayacı artıracağını belirler; kodda sabit
 sayaç adı geçmez. Sunucu envanterin, istatistiklerin ve dünya durumunun tek
 sahibidir (server authority).
+
+**`source` alanı (isteğe bağlı):** sayaç yalnızca o nesne türü **kırıldığında**
+artar. Ağaç ve kütük ikisi de `wood` düşürdüğü için bu ayrım şarttır: yoksa
+"Kesilen Ağaç" sayacı kütük kesmeyi de sayardı. `source` verilmemiş sayaçlar
+eşya **toplandığında** artar (mevcut `stone` davranışı).
 
 ## Hesap Sistemi (Auth Katmanı)
 
@@ -134,6 +200,47 @@ jetonlar HMAC-SHA256 imzalıdır, giriş/kayıt uçlarında IP başına hız sı
 
 > **Tasarım kararı:** `/session` ucu asla 401 dönmez. Misafir oyuncunun oyuna
 > girmesini engellemek istemedik; "hesap var mı" bilgisi yalnızca bir alandır.
+
+### Yer Çizgisi: `groundOffset` ve Çarpışma
+
+Nesne PNG'lerinin altında **şeffaf boşluk** vardır (kaya ~12-22px, ağaç 57px,
+kütük 11-25px). Sprite merkezi (origin 0.5) esas alınırsa nesnenin görsel tabanı
+merkezin *üstünde* kalır; bu yüzden gölge ve çarpışma kutusu aşağı kayar.
+
+`groundOffset`, sprite merkezi ile nesnenin **yere bastığı nokta** arasındaki
+farktır (piksel). Gölge ve collider bu tek "yer çizgisi"ne göre hizalanır:
+
+```json
+"sprite": {
+  "atlas": "assets/Objects/Rock/{n}.png", "variants": 8, "display": 0.85,
+  "groundOffset": -6, "collider": 0.85, "colliderW": 44, "colliderH": 16
+}
+```
+
+| Nesne | `groundOffset` | Collider (px) | Gölge |
+|---|---|---|---|
+| `stone` | `0` | — (toplanır) | `1.png` |
+| `log` | `-8` | 26 × 12 | `3.png` |
+| `lamp` | `0` | — (dekor) | `2.png` |
+| `woodPile` | `-8` | — (dekor) | `4.png` |
+| `tree` | `-31` | 30 × 18 | `6.png` |
+| `rock` | `-6` | 44 × 16 | `6.png` |
+
+Kurallar:
+
+- **Collider ayak izidir:** `colliderW` × `colliderH` kutusu yer çizgisine
+  **alt kenarından oturur** (`y = groundY - h`). Eski `collider` alanı karo
+  oranı olarak geriye dönük uyumludur (tek sayı verilirse kare kabul edilir).
+- **Gölge `offsetY` yer çizgisinden ölçülür.** `0` gölgeyi tam ayağın üstüne
+  oturtur; pozitif değer aşağı kaydırır.
+- Ağaç gibi y-sıralı nesnelerde derinlik `data.y` yerine `groundY`'den
+  hesaplanır; böylece oyuncu ağacın arkasına geçme sırası doğru kalır.
+- Kırılan ağacın kalıntısı (`stump`) da yer çizgisine oturur (`stump.offsetY`
+  bu çizgiden ölçülür).
+
+> **Yeni nesne eklerken:** PNG'nin altındaki şeffaf boşluğu ölçüp
+> `groundOffset`'i `-(boşluk - 1) × ölçek` civarında verin; collider'ı da
+> nesnenin görsel genişliğinin ~%70'i kadar seçin.
 
 ## Dizin Yapısı
 

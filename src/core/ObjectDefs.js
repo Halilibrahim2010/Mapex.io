@@ -26,7 +26,12 @@ function resolveSprites(def) {
   }
   const survivor = def.stump ? substitute(def.stump.atlas, def.stump.n) : null;
   const shadow = def.shadow ? substitute(def.shadow.atlas, def.shadow.n) : null;
-  return { atlas, survivor, shadow };
+  // Kütük kalıntısının kendi gölgesi olabilir; atlas'ı yoksa nesnenin gölge
+  // atlası kullanılır (JSON'da yalnızca {n} verilmesi yeterli olsun).
+  const stumpShadow = def.stump && def.stump.shadow
+    ? substitute((def.stump.shadow.atlas || def.shadow.atlas), def.stump.shadow.n)
+    : null;
+  return { atlas, survivor, shadow, stumpShadow };
 }
 
 function buildEntry(id, raw) {
@@ -44,7 +49,8 @@ function buildEntry(id, raw) {
       : null,
     textures: sprite ? sprite.atlas : [],
     stumpTexture: sprite ? sprite.survivor : null,
-    shadowTexture: sprite ? sprite.shadow : null
+    shadowTexture: sprite ? sprite.shadow : null,
+    stumpShadowTexture: sprite ? sprite.stumpShadow : null
   };
 }
 
@@ -120,6 +126,7 @@ export function spriteFileList() {
     for (const file of def.textures) files.add(file);
     if (def.stumpTexture) files.add(def.stumpTexture);
     if (def.shadowTexture) files.add(def.shadowTexture);
+    if (def.stumpShadowTexture) files.add(def.stumpShadowTexture);
   }
   return Array.from(files);
 }
