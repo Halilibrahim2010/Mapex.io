@@ -1,86 +1,186 @@
-// Karakter ızgarası ve isim girişi. Karakter listesi shared/objectDefs.json'dan
-// gelir; yeni karakter eklemek için bu dosyaya dokunmak gerekmez.
-// PreloadScene veriyi zaten yüklediyse fetch yapılmaz (tek istek).
-import { ensureGameData, getCharacters } from '../core/ObjectDefs.js';
+import { ensureCostumeData, getCostumes, getCostumeById, getSelectedCostumeId, setSelectedCostumeId, getSelectedCharacterName, setSelectedCharacterName } from '../core/CostumeDefs.js';
 import { getSession, onSessionChange } from '../account/index.js';
 import { initAccountPanel, renderSessionBar } from './AccountPanel.js';
-
-const DEFAULT_CHARACTERS = {
-    count: 18,
-    files: [ "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "12.png", "13.png", "14.png", "15.png", "16.png", "17.png", "18.png" ],
-    names: [ "Altın Saçlı Çocuk", "Yeşil Saçlı Çocuk", "Turuncu Saçlı Adam", "Yeşil Saçlı Adam", "Ninja", "Pembe Saçlı Kadın", "Yeşil Başlıklı Çocuk", "Mavi Saçlı Adam", "Korsan", "Romalı Savaşçı", "Zırhlı Savaşçı", "Gladyatör", "Zırhlı Ninja", "Zırhlı Savaşçı 2", "Ateş Canavarı", "Mor Canavar", "Kırmızı Beyin", "Böcek" ]
-};
-
-async function fetchCharacters() {
-  try {
-    await ensureGameData();
-    return getCharacters();
-  } catch (error) {
-    return DEFAULT_CHARACTERS;
-  }
-}
+import { initMultiplayerPanel } from './MultiplayerPanel.js';
+import { initLobbyPanel } from './LobbyPanel.js';
 
 export async function initMenu() {
-  const characters = await fetchCharacters();
-  const sheetUrl = (i) => `assets/Characters/Char ${i}/${characters.files[(i - 1) % characters.files.length]}`;
-  const nameOf = (i) => (characters.names && characters.names[(i - 1) % characters.names.length]) || 'Karakter';
+  await ensureCostumeData();
+  const costumes = getCostumes();
 
-  let selectedChar = 1;
-  const grid = document.getElementById('char-grid');
-  const big = document.getElementById('char-big');
-  const charName = document.getElementById('char-name');
-
-  if (!grid || !big || !charName) return;
-
-  // Izgarayı doldur
-  for (let i = 1; i <= characters.count; i++) {
-    const thumb = document.createElement('div');
-    thumb.className = `char-thumb${i === 1 ? ' selected' : ''}`;
-    thumb.style.backgroundImage = `url('${sheetUrl(i)}')`;
-    thumb.title = `${nameOf(i)}`;
-    thumb.addEventListener('click', () => selectChar(i, thumb));
-    grid.appendChild(thumb);
-  }
-
-  function selectChar(i, el) {
-    selectedChar = i;
-    big.style.backgroundImage = `url('${sheetUrl(i)}')`;
-    charName.textContent = `${nameOf(i)}`;
-
-    document.querySelectorAll('.char-thumb').forEach((t) => t.classList.remove('selected'));
-    el.classList.add('selected');
-  }
-
-  big.style.backgroundImage = `url('${sheetUrl(1)}')`;
-  charName.textContent = `${nameOf(1)}`;
-
-  // Oyun Başlatma Mantığı
   const overlay = document.getElementById('menu-overlay');
-  const input = document.getElementById('name-input');
-  const submitBtn = document.getElementById('name-submit');
+  const viewMain = document.getElementById('view-main');
+  const viewMultiplayer = document.getElementById('view-multiplayer');
+  const viewLobby = document.getElementById('view-lobby');
+  const viewCostume = document.getElementById('view-costume');
 
-  function startGame() {
-    const name = input.value.trim() || 'Oyuncu';
-    overlay.style.display = 'none';
-    // Oturum da başlangıç isteğiyle taşınır: sahne hesabın ne olduğunu
-    // sorgulamaz, yalnızca hazır oturumu kullanır (bağımlılık yönü tek yönlü).
-    window.dispatchEvent(new CustomEvent('mapex:start', {
-      detail: { name, char: selectedChar, session: getSession() }
-    }));
+  let isSinglePlayerFlow = false;
+
+  function switchView(targetId) {
+    [viewMain, viewMultiplayer, viewLobby, viewCostume].forEach((el) => {
+      if (el) el.style.display = el.id === targetId ? 'block' : 'none';
+    });
   }
 
-  submitBtn?.addEventListener('click', startGame);
-  input?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') startGame();
+  function updateMainStrip() {
+    const id = getSelectedCostumeId() || 1;
+    const costume = getCostumeById(id);
+    const session = getSession();
+    const name = getSelectedCharacterName() || (session && session.displayName) || 'Oyuncu';
+
+    const thumb = document.getElementById('main-current-char-thumb');
+    const nameEl = document.getElementById('main-current-name');
+    const costumeEl = document.getElementById('main-current-costume');
+
+    if (thumb) thumb.style.backgroundImage = `url('assets/Characters/Char ${id}/${id}.png')`;
+    if (nameEl) nameEl.textContent = name;
+    if (costumeEl) costumeEl.textContent = `${costume.name} (${costume.category})`;
+  }
+
+
+  function updateCostumePreview() {
+    const id = getSelectedCostumeId() || 1;
+    const costume = getCostumeById(id);
+    const previewEl = document.getElementById('costume-char-preview');
+    const nameEl = document.getElementById('costume-char-name');
+    const badgeEl = document.getElementById('costume-char-badge');
+
+    if (previewEl) previewEl.style.backgroundImage = `url('assets/Characters/Char ${id}/${id}.png')`;
+    if (nameEl) nameEl.textContent = costume.name;
+    if (badgeEl) badgeEl.textContent = `${costume.category} (${id} / 18)`;
+  }
+
+
+  function startGame(detail) {
+    if (overlay) overlay.style.display = 'none';
+    window.dispatchEvent(new CustomEvent('mapex:start', { detail }));
+  }
+
+
+  // 1. TEK OYUNCULU AKIŞI
+  const btnSingle = document.getElementById('btn-singleplayer');
+  btnSingle?.addEventListener('click', () => {
+    const session = getSession();
+    const existingName = getSelectedCharacterName() || (session && session.displayName);
+    if (existingName) {
+      startGame({
+        name: existingName,
+        char: getSelectedCostumeId() || 1,
+        session,
+        options: { mode: 'singleplayer', isOffline: true }
+      });
+    } else {
+      isSinglePlayerFlow = true;
+      openCostumeSelector(true);
+    }
   });
-  input?.focus();
 
-  // Sağ tık menüsünü engelleme
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  // 2. ÇOK OYUNCULU AKIŞI
+  const btnMulti = document.getElementById('btn-multiplayer');
+  btnMulti?.addEventListener('click', () => switchView('view-multiplayer'));
 
-  // Hesap paneli: sekmeler, giriş/kayıt formu ve oturum şeridi. Panel hiç
-  // kullanılmasa da oyun "MİSAFİR" oturumuyla başlar.
+  // 3. LOBBY AKIŞI
+  const btnLobby = document.getElementById('btn-lobby');
+  btnLobby?.addEventListener('click', () => switchView('view-lobby'));
+
+  // 4. KIYAFET AKIŞI
+  const btnCostume = document.getElementById('btn-costume');
+  function openCostumeSelector(singlePlayer = false) {
+    isSinglePlayerFlow = singlePlayer;
+    switchView('view-costume');
+    updateCostumePreview();
+    const input = document.getElementById('costume-name-input');
+    const saveBtn = document.getElementById('btn-costume-save');
+    const contBtn = document.getElementById('btn-costume-continue');
+
+    if (input) input.value = getSelectedCharacterName() || (getSession() && getSession().displayName) || '';
+    if (saveBtn) saveBtn.style.display = singlePlayer ? 'none' : 'block';
+    if (contBtn) contBtn.style.display = singlePlayer ? 'block' : 'none';
+  }
+
+  btnCostume?.addEventListener('click', () => openCostumeSelector(false));
+
+  // Kıyafet seçim butonları
+  const btnPrev = document.getElementById('btn-costume-prev');
+  const btnNext = document.getElementById('btn-costume-next');
+  let isNavigating = false;
+
+  function changeCostume(delta) {
+    if (isNavigating) return;
+    isNavigating = true;
+    setTimeout(() => { isNavigating = false; }, 100);
+
+    let id = getSelectedCostumeId() + delta;
+    if (id < 1) id = 18;
+    if (id > 18) id = 1;
+    setSelectedCostumeId(id);
+    updateCostumePreview();
+    window.dispatchEvent(new CustomEvent('mapex:costumeChanged', { detail: { id, costume: getCostumeById(id) } }));
+  }
+
+  btnPrev?.addEventListener('click', () => changeCostume(-1));
+  btnNext?.addEventListener('click', () => changeCostume(1));
+
+  const costumeNameInput = document.getElementById('costume-name-input');
+  const btnSaveCostume = document.getElementById('btn-costume-save');
+  const btnContinueCostume = document.getElementById('btn-costume-continue');
+
+  function commitCostumeSelection() {
+    const name = costumeNameInput?.value.trim() || 'Oyuncu';
+    setSelectedCharacterName(name);
+    const session = getSession();
+    if (session) session.displayName = name;
+    updateMainStrip();
+  }
+
+  btnSaveCostume?.addEventListener('click', () => {
+    commitCostumeSelection();
+    switchView('view-main');
+  });
+
+  btnContinueCostume?.addEventListener('click', () => {
+    commitCostumeSelection();
+    const session = getSession();
+    startGame({
+      name: getSelectedCharacterName(),
+      char: getSelectedCostumeId() || 1,
+      session,
+      options: { mode: 'singleplayer', isOffline: true }
+    });
+  });
+
+
+  // Geri butonları
+  document.getElementById('btn-multiplayer-back')?.addEventListener('click', () => {
+    switchView('view-main');
+  });
+  document.getElementById('btn-lobby-back')?.addEventListener('click', () => {
+    switchView('view-main');
+  });
+  document.getElementById('btn-costume-back')?.addEventListener('click', () => {
+    switchView('view-main');
+  });
+
+  // Panelleri bağla
   initAccountPanel();
-  onSessionChange((session) => renderSessionBar(session));
+  initMultiplayerPanel((detail) => startGame(detail));
+  initLobbyPanel((detail) => startGame(detail));
+
+  // Oturum değişiminde ve kostüm değişiminde UI güncelle
+  window.addEventListener('mapex:costumeChanged', (e) => {
+    if (e.detail && e.detail.id) {
+      setSelectedCostumeId(e.detail.id);
+      updateCostumePreview();
+      updateMainStrip();
+    }
+  });
+
+  onSessionChange((session) => {
+    renderSessionBar(session);
+    updateMainStrip();
+  });
+
+  // İlk yüklemede UI güncelle
   renderSessionBar(getSession());
+  updateMainStrip();
 }

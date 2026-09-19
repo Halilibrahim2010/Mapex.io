@@ -1,7 +1,10 @@
 import { PreloadScene } from './scenes/PreloadScene.js';
+import { MainMenuScene } from './scenes/MainMenuScene.js';
+import { CostumeSelectScene } from './scenes/CostumeSelectScene.js';
 import { MainScene } from './scenes/MainScene.js';
 import { initMenu } from './ui/Menu.js';
 import { ensureGameData } from './core/ObjectDefs.js';
+import { ensureCostumeData } from './core/CostumeDefs.js';
 import { initAccount } from './account/index.js';
 import './core/StartRequest.js';
 
@@ -10,6 +13,7 @@ import './core/StartRequest.js';
 async function boot() {
   try {
     await ensureGameData();
+    await ensureCostumeData();
   } catch (error) {
     console.error('Oyun verisi yüklenemedi:', error);
     const overlay = document.getElementById('menu-overlay');
@@ -40,7 +44,7 @@ async function boot() {
         debug: false
       }
     },
-    scene: [PreloadScene, MainScene]
+    scene: [PreloadScene, MainMenuScene, CostumeSelectScene, MainScene]
   };
 
   const game = new Phaser.Game(config);

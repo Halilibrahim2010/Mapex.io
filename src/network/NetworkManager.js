@@ -5,7 +5,7 @@ import { ANIM_STATE } from '../entities/AnimState.js';
 const SERVER_URL = 'http://' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost') + ':3019';
 
 export class NetworkManager {
-  constructor(scene, name = 'Oyuncu', char = 1, session = null) {
+  constructor(scene, name = 'Oyuncu', char = 1, session = null, options = {}) {
     this.scene = scene;
     this.name = name;
     this.char = char || 1;
@@ -13,14 +13,17 @@ export class NetworkManager {
     // Yalnızca iki bilgiyi kullanır: jeton (kimlik) ve displayName (etiket).
     this.session = session;
     this.sessionToken = session && session.token ? session.token : null;
+    this.options = options || {};
+    this.roomId = this.options.roomId || 'public_ff_off';
+    this.isOffline = Boolean(this.options.isOffline || this.options.mode === 'singleplayer');
     this.remotePlayers = new Map();
-    // Sunucu yoksa yerel mod aynı olayları üretir; oyun tek kişilik devam eder.
+    // Sunucu yoksa veya tek kişilik mod ise yerel sunucu çalışır
     this.socket = this._connect();
     this._bindEvents();
   }
 
   _connect() {
-    if (typeof io !== 'function') return new LocalServer(this.scene);
+    if (this.isOffline || typeof io !== 'function') return new LocalServer(this.scene);
     const socket = io(SERVER_URL, { reconnectionAttempts: 1, timeout: 2500 });
     socket.on('connect_error', () => {
       if (socket.io) socket.io.reconnectionAttempts(0);
@@ -35,7 +38,7 @@ export class NetworkManager {
     this.socket.disconnect();
     this.socket = new LocalServer(this.scene);
     this._bindEvents();
-    this.emit('hello', { name: this.name, char: this.char });
+    this.emit('hello', { name: this.name, char: this.char, roomId: this.roomId });
   }
 
   on(event, callback) {
@@ -58,7 +61,12 @@ export class NetworkManager {
     this.on('connect', () => {
       // sessionToken: kayıtlı oyuncunun oturumu sunucuda çözülür. Jeton yoksa
       // sunucu misafir oturumu atar; yani bu alan opsiyoneldir.
-      this.emit('hello', { name: this.name, char: this.char, sessionToken: this.sessionToken });
+      this.emit('hello', {
+        name: this.name,
+        char: this.char,
+        sessionToken: this.sessionToken,
+        roomId: this.roomId
+      });
     });
 
     // Sunucu oturumu (misafir mi, kayıtlı mı) bu olayla bildirir. Oyun kodu

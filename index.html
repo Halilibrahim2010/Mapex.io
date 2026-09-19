@@ -13,77 +13,209 @@
   <div id="game-container"></div>
 
   <div id="menu-overlay">
-    <div class="menu-card">
-      <h1 class="menu-title">mapex.io</h1>
-      <p class="menu-sub">KARAKTERİNİ SEÇ • ADINI GİR • DÜNYAYA ADIM AT</p>
+    <!-- SAĞ ÜST KÖŞE HESAP / OTURUM ALANI -->
+    <div id="top-account-bar">
+      <button id="btn-open-auth" class="top-auth-btn">
+        Giriş Yap / Kayıt Ol
+      </button>
 
-      <div class="char-section">
-        <div class="char-preview">
-          <div id="char-big" class="char-sprite-big"></div>
-          <div id="char-name" class="char-preview-name">Savaşçı 1</div>
-        </div>
-        <div class="char-grid" id="char-grid"></div>
-      </div>
-
-      <div class="menu-actions">
-        <input type="text" id="name-input" maxlength="16" placeholder="Kullanıcı adın..." />
-        <button id="name-submit">OYUNA GİR</button>
-      </div>
-
-      <!-- HESAP PANELİ: oyundan tamamen bağımsız bir kabuk. Panel boş/kapalı
-           olsa da oyun misafir olarak başlar; hesap sistemi opsiyoneldir. -->
       <div class="session-bar" id="session-bar">
         <div class="session-info">
           <span id="session-name">Oyuncu</span>
           <span class="session-badge" id="session-badge">MİSAFİR</span>
         </div>
         <div class="session-economy">
-          <span id="session-gold">🪙 0</span>
-          <span id="session-gems">💎 0</span>
-          <span id="session-level">★ 1</span>
+          <span id="session-gold">Gold: 0</span>
+          <span id="session-gems">Gems: 0</span>
         </div>
-        <button id="account-signout">ÇIKIŞ</button>
+        <button id="account-signout">Çıkış</button>
       </div>
+    </div>
 
-      <div class="account-tabs">
-        <button class="account-tab active" id="tab-login" data-panel="login">GİRİŞ YAP</button>
-        <button class="account-tab" id="tab-register" data-panel="register">KAYIT OL</button>
-      </div>
-
-      <div class="account-panel active" id="panel-login">
-        <div class="account-field">
-          <label for="login-email">E-posta</label>
-          <input type="email" id="login-email" autocomplete="email" placeholder="ornek@eposta.com" />
+    <!-- HESAP KAZANÇ / GİRİŞ MODALI -->
+    <div id="account-modal" class="modal-backdrop" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>HESAP İŞLEMLERİ</h3>
+          <button id="btn-close-auth-modal" class="btn-close">✕</button>
         </div>
-        <div class="account-field">
-          <label for="login-password">Şifre</label>
-          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" />
-        </div>
-        <button class="account-submit" id="login-submit">GİRİŞ YAP</button>
-      </div>
 
-      <div class="account-panel" id="panel-register">
-        <div id="register-row">
+        <div class="account-tabs">
+          <button class="account-tab active" id="tab-login" data-panel="login">GİRİŞ YAP</button>
+          <button class="account-tab" id="tab-register" data-panel="register">KAYIT OL</button>
+        </div>
+
+        <div class="account-panel active" id="panel-login">
           <div class="account-field">
-            <label for="register-username">Kullanıcı adı</label>
-            <input type="text" id="register-username" maxlength="15" autocomplete="username" placeholder="3-15 karakter" />
+            <label for="login-email">E-posta</label>
+            <input type="email" id="login-email" autocomplete="email" placeholder="ornek@eposta.com" />
           </div>
           <div class="account-field">
-            <label for="register-email">E-posta</label>
-            <input type="email" id="register-email" autocomplete="email" placeholder="ornek@eposta.com" />
+            <label for="login-password">Şifre</label>
+            <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" />
           </div>
+          <button class="account-submit" id="login-submit">GİRİŞ YAP</button>
         </div>
-        <div class="account-field">
-          <label for="register-password">Şifre</label>
-          <input type="password" id="register-password" autocomplete="new-password" placeholder="En az 8 karakter" />
+
+        <div class="account-panel" id="panel-register">
+          <div id="register-row">
+            <div class="account-field">
+              <label for="register-username">Kullanıcı adı</label>
+              <input type="text" id="register-username" maxlength="15" autocomplete="username" placeholder="3-15 karakter" />
+            </div>
+            <div class="account-field">
+              <label for="register-email">E-posta</label>
+              <input type="email" id="register-email" autocomplete="email" placeholder="ornek@eposta.com" />
+            </div>
+          </div>
+          <div class="account-field">
+            <label for="register-password">Şifre</label>
+            <input type="password" id="register-password" autocomplete="new-password" placeholder="En az 8 karakter" />
+          </div>
+          <button class="account-submit" id="register-submit">KAYIT OL</button>
+          <button class="account-submit ghost" id="guest-continue">MİSAFİR OLARAK DEVAM ET</button>
         </div>
-        <button class="account-submit" id="register-submit">KAYIT OL</button>
-        <button class="account-submit ghost" id="guest-continue">MİSAFİR OLARAK DEVAM ET</button>
+
+        <p class="account-message" id="account-message"></p>
+      </div>
+    </div>
+
+    <!-- 1. ANA MENÜ PANELİ -->
+    <div class="menu-card" id="view-main">
+      <h1 class="menu-title">mapex.io</h1>
+      <p class="menu-sub">RETRO PIXEL-ART SANDBOX MMO</p>
+
+      <div class="current-character-strip" id="current-char-strip">
+        <div class="char-thumb selected" id="main-current-char-thumb"></div>
+        <div class="char-strip-info">
+          <span class="char-strip-name" id="main-current-name">Oyuncu</span>
+          <span class="char-strip-costume" id="main-current-costume">Altın Saçlı Çocuk</span>
+        </div>
       </div>
 
-      <p class="account-message" id="account-message"></p>
+      <div class="menu-main-actions">
+        <div class="menu-row-top">
+          <button id="btn-singleplayer" class="menu-btn primary">TEK OYUNCULU</button>
+          <button id="btn-multiplayer" class="menu-btn primary">ÇOK OYUNCULU</button>
+        </div>
+        <button id="btn-lobby" class="menu-btn secondary center-btn">LOBBY (ÖZEL ODA)</button>
+        <button id="btn-costume" class="menu-btn secondary center-btn">KIYAFET & KARAKTER SEÇİMİ</button>
+      </div>
 
       <p class="menu-hint">WASD / Ok tuşları: hareket • Basılı sol tık: ağaç kes • I: envanter • ESC: menü</p>
+    </div>
+
+    <!-- 2. ÇOK OYUNCULU SUNUCULAR PANELİ -->
+    <div class="menu-card" id="view-multiplayer" style="display:none;">
+      <h1 class="menu-title">ÇOK OYUNCULU</h1>
+      <p class="menu-sub">BİR PUBLIC SUNUCU SEÇ VE DÜNYAYA KATIL</p>
+
+      <div class="server-cards-grid">
+        <div class="server-card">
+          <div class="server-badge pvp">DOST ATEŞİ AÇIK (PvP)</div>
+          <h3 class="server-name">Vahşi Doğa</h3>
+          <p class="server-desc">Oyuncular birbirine hasar verebilir. Rekabetçi hayatta kalma ve kaynak savaşı.</p>
+          <button class="menu-btn primary server-join-btn" data-room="public_ff_on">SUNUCUYA GİR</button>
+        </div>
+
+        <div class="server-card">
+          <div class="server-badge coop">DOST ATEŞİ KAPALI (Co-op)</div>
+          <h3 class="server-name">Huzurlu Vadi</h3>
+          <p class="server-desc">Oyuncular birbirine hasar veremez. Birlikte keşif, yardımlaşma ve inşa.</p>
+          <button class="menu-btn primary server-join-btn" data-room="public_ff_off">SUNUCUYA GİR</button>
+        </div>
+      </div>
+
+      <button class="btn-back" id="btn-multiplayer-back">← Ana Menüye Dön</button>
+    </div>
+
+    <!-- 3. ÖZEL LOBBY PANELİ -->
+    <div class="menu-card" id="view-lobby" style="display:none;">
+      <h1 class="menu-title">ÖZEL LOBBY</h1>
+      <p class="menu-sub">ARKADAŞLARINLA ÖZEL ODA OLUŞTUR VEYA KODLA KATIL</p>
+
+      <div class="account-tabs">
+        <button class="account-tab active" id="tab-lobby-create" data-lobby="create">LOBBY OLUŞTUR</button>
+        <button class="account-tab" id="tab-lobby-join" data-lobby="join">KOD İLE KATIL</button>
+      </div>
+
+      <!-- LOBBY OLUŞTURMA FORMU -->
+      <div class="lobby-tab-content active" id="panel-lobby-create">
+        <div class="account-field">
+          <label for="lobby-name-input">Lobby Adı</label>
+          <input type="text" id="lobby-name-input" maxlength="24" placeholder="Oda adı girin..." />
+        </div>
+        <div class="account-field">
+          <label for="lobby-pass-input">Şifre (İsteğe Bağlı)</label>
+          <input type="password" id="lobby-pass-input" placeholder="Boş bırakılırsa şifresiz olur" />
+        </div>
+        <div class="account-field">
+          <label for="lobby-max-players">Maksimum Oyuncu: <strong id="lobby-max-display">8</strong></label>
+          <input type="range" id="lobby-max-players" min="2" max="16" value="8" />
+        </div>
+        <div class="lobby-toggle-row">
+          <label class="toggle-container">
+            <input type="checkbox" id="lobby-ff-toggle" />
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Dost Ateşi (PvP) Açık Olsun</span>
+        </div>
+
+        <button id="btn-create-lobby-submit" class="account-submit">LOBBY OLUŞTUR</button>
+
+        <div class="lobby-created-box" id="box-lobby-created" style="display:none;">
+          <p class="lobby-code-label">LOBBY OLUŞTURULDU! DAVET KODU:</p>
+          <div class="lobby-code-display" id="display-created-code">A17QSTA</div>
+          <div class="lobby-code-actions">
+            <button id="btn-copy-code" class="account-submit ghost">📋 Kodu Kopyala</button>
+            <button id="btn-enter-created-lobby" class="account-submit">LOBBY'YE GİR</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KOD İLE KATILMA FORMU -->
+      <div class="lobby-tab-content" id="panel-lobby-join" style="display:none;">
+        <div class="account-field">
+          <label for="lobby-join-code-input">7 Haneli Davet Kodu</label>
+          <input type="text" id="lobby-join-code-input" maxlength="7" placeholder="Örn: A17QSTA" class="code-input" />
+        </div>
+        <div class="account-field">
+          <label for="lobby-join-pass-input">Oda Şifresi (Gerekliyse)</label>
+          <input type="password" id="lobby-join-pass-input" placeholder="Şifreli odalar için..." />
+        </div>
+        <button id="btn-join-lobby-submit" class="account-submit">LOBBY'YE KATIL</button>
+      </div>
+
+      <p class="account-message" id="lobby-message"></p>
+      <button class="btn-back" id="btn-lobby-back">← Ana Menüye Dön</button>
+    </div>
+
+    <!-- 4. KIYAFET / KARAKTER SEÇİM PANELİ -->
+    <div class="menu-card" id="view-costume" style="display:none;">
+      <h1 class="menu-title">KIYAFET & KARAKTER</h1>
+      <p class="menu-sub">GÖRÜNÜMÜNÜ SEÇ VE OYUNCU ADINI BELİRLE</p>
+
+      <div class="costume-selector-box">
+        <button class="btn-arrow" id="btn-costume-prev">◄</button>
+        <div class="costume-stage">
+          <div id="costume-char-preview" class="char-sprite-big"></div>
+          <div id="costume-char-name" class="char-preview-name">Altın Saçlı Çocuk</div>
+          <div id="costume-char-badge" class="costume-category-badge">Maceracı (1 / 18)</div>
+        </div>
+        <button class="btn-arrow" id="btn-costume-next">►</button>
+      </div>
+
+      <div class="account-field">
+        <label for="costume-name-input">Görünen Adın</label>
+        <input type="text" id="costume-name-input" maxlength="16" placeholder="Kullanıcı adın..." />
+      </div>
+
+      <div class="costume-actions">
+        <button id="btn-costume-save" class="account-submit">KAYDET</button>
+        <button id="btn-costume-continue" class="account-submit primary" style="display:none;">DEVAM ET VE OYNA</button>
+      </div>
+
+      <button class="btn-back" id="btn-costume-back">← Ana Menüye Dön</button>
     </div>
   </div>
 
