@@ -20,7 +20,9 @@ export class PlayerInput {
   }
 
   getVector() {
-    if (!this.active) return { moveX: 0, moveY: 0 };
+    if (!this.active || this.scene.chatOpen || (this.scene.chatBox && this.scene.chatBox.isOpen) || this.scene.menuOpen || this.scene.inventoryOpen || this.scene.settingsOpen) {
+      return { moveX: 0, moveY: 0 };
+    }
 
     let moveX = 0;
     let moveY = 0;

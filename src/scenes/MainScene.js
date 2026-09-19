@@ -253,13 +253,14 @@ export class MainScene extends Phaser.Scene {
   _bindKeyActions() {
     this._keyHandlers = {
       inventory: () => {
-        if (!this.menuOpen && !this.settingsOpen) this.toggleInventory();
+        if (!this.menuOpen && !this.settingsOpen && !this.chatOpen) this.toggleInventory();
       },
       pickup: () => {
-        if (this.menuOpen || this.settingsOpen) return;
+        if (this.menuOpen || this.settingsOpen || this.chatOpen) return;
         this.interactions.pickUpNearby(this.drops);
       },
       dropItem: () => {
+        if (this.menuOpen || this.settingsOpen || this.chatOpen) return;
         const entry = this.inventoryView.selectedEntry;
         if (this.inventoryView.isOpen && entry) this.dropItem(entry.slot.itemId, 1);
       }

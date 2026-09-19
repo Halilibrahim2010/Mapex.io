@@ -68,7 +68,7 @@
       "shape": { "w": 2, "h": 2 },
       "sprite": {
         "atlas": "assets/Objects/Rock/{n}.png", "variants": 8, "display": 0.85, "depth": 2,
-        "groundOffset": 8, "collider": 0.85, "colliderW": 28, "colliderH": 0
+        "groundOffset": 8, "collider": 0.85, "colliderW": 28, "colliderH": 16
       },
       "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0, "width": 52, "height": 20},
       "spawn": { "chance": 0.3, "cells": 4, "salt": 2, "bigOnly": true, "size": "big", "texMin": 7, "texMax": 12 }
