@@ -20,8 +20,8 @@
     "count": 18,
     "frameWidth": 64,
     "frameHeight": 64,
-    "files": ["Character 1.png", "Character 5.png", "Character 9.png"],
-    "names": ["Savaşçı", "Okçu", "Büyücü"]
+    "files": [ "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "12.png", "13.png", "14.png", "15.png", "16.png", "17.png", "18.png" ],
+    "names": [ "Altın Saçlı Çocuk", "Yeşil Saçlı Çocuk", "Turuncu Saçlı Adam", "Yeşil Saçlı Adam", "Ninja", "Pembe Saçlı Kadın", "Yeşil Başlıklı Çocuk", "Mavi Saçlı Adam", "Korsan", "Romalı Savaşçı", "Zırhlı Savaşçı", "Gladyatör", "Zırhlı Ninja", "Zırhlı Savaşçı 2", "Ateş Canavarı", "Mor Canavar", "Kırmızı Beyin", "Böcek" ]
   },
 
   "ui": {
@@ -56,7 +56,7 @@
       "interaction": "pickup",
       "shape": { "w": 1, "h": 1 },
       "sprite": { "atlas": "assets/Objects/Stone/{n}.png", "variants": 8, "display": 0.42, "depth": 2, "groundOffset": 0 },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 1, "offsetY": 0, "width": 13, "height": 7, "alpha": 0.32 },
+      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 1, "offsetY": 0, "width": 13, "height": 7 },
       "spawn": { "chance": 0.252, "cells": 4, "salt": 2, "bigOnly": false, "size": "small", "texMin": 1, "texMax": 1 },
       "pickup": { "range": 52, "amount": 1 }
     },
@@ -68,9 +68,9 @@
       "shape": { "w": 2, "h": 2 },
       "sprite": {
         "atlas": "assets/Objects/Rock/{n}.png", "variants": 8, "display": 0.85, "depth": 2,
-        "groundOffset": -6, "collider": 0.85, "colliderW": 44, "colliderH": 16
+        "groundOffset": 8, "collider": 0.85, "colliderW": 28, "colliderH": 0
       },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0, "width": 52, "height": 20, "alpha": 0.4 },
+      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0, "width": 52, "height": 20},
       "spawn": { "chance": 0.3, "cells": 4, "salt": 2, "bigOnly": true, "size": "big", "texMin": 7, "texMax": 12 }
     },
 
@@ -83,7 +83,7 @@
         "atlas": "assets/Objects/Decor/Log{n}.png", "variants": 4, "scale": 1.15, "depth": 2,
         "groundOffset": -8, "collider": 0.5, "colliderW": 26, "colliderH": 12
       },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 3, "offsetY": 0, "width": 30, "height": 13, "alpha": 0.36 },
+      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 3, "offsetY": 0, "width": 30, "height": 13},
       "spawn": { "chance": 0.22, "cells": 4, "salt": 5, "bigOnly": false, "size": "small" },
       "harvest": { "holdTime": 5.6, "range": 62, "hitHeight": 20, "hitHalfWidth": 26, "shakes": 2 },
       "drop": { "itemId": "wood", "count": 1, "countMax": 2 }
@@ -107,9 +107,9 @@
       "shape": { "w": 2, "h": 2 },
       "sprite": {
         "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 1, "scale": 1.6, "depth": 3000,
-        "groundOffset": -31, "collider": 0.7, "colliderW": 30, "colliderH": 18
+        "groundOffset": 52, "collider": 0.7, "colliderW": 30, "colliderH": 18
       },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0, "width": 78, "height": 30, "alpha": 0.38 },
+      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0},
       "spawn": { "chance": 0.25, "cells": 4, "salt": 0, "bigOnly": true, "size": "big" },
       "harvest": { "holdTime": 8, "range": 70, "hitHeight": 20, "hitHalfWidth": 34, "shakes": 1 },
       "drop": { "itemId": "wood", "count": 1, "countMax": 3 },

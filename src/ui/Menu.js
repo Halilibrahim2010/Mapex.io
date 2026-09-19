@@ -5,7 +5,11 @@ import { ensureGameData, getCharacters } from '../core/ObjectDefs.js';
 import { getSession, onSessionChange } from '../account/index.js';
 import { initAccountPanel, renderSessionBar } from './AccountPanel.js';
 
-const DEFAULT_CHARACTERS = { count: 18, files: ['Character 1.png', 'Character 5.png', 'Character 9.png'], names: ['Savaşçı'] };
+const DEFAULT_CHARACTERS = {
+    count: 18,
+    files: [ "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "12.png", "13.png", "14.png", "15.png", "16.png", "17.png", "18.png" ],
+    names: [ "Altın Saçlı Çocuk", "Yeşil Saçlı Çocuk", "Turuncu Saçlı Adam", "Yeşil Saçlı Adam", "Ninja", "Pembe Saçlı Kadın", "Yeşil Başlıklı Çocuk", "Mavi Saçlı Adam", "Korsan", "Romalı Savaşçı", "Zırhlı Savaşçı", "Gladyatör", "Zırhlı Ninja", "Zırhlı Savaşçı 2", "Ateş Canavarı", "Mor Canavar", "Kırmızı Beyin", "Böcek" ]
+};
 
 async function fetchCharacters() {
   try {
@@ -33,7 +37,7 @@ export async function initMenu() {
     const thumb = document.createElement('div');
     thumb.className = `char-thumb${i === 1 ? ' selected' : ''}`;
     thumb.style.backgroundImage = `url('${sheetUrl(i)}')`;
-    thumb.title = `${nameOf(i)} ${i}`;
+    thumb.title = `${nameOf(i)}`;
     thumb.addEventListener('click', () => selectChar(i, thumb));
     grid.appendChild(thumb);
   }
@@ -41,14 +45,14 @@ export async function initMenu() {
   function selectChar(i, el) {
     selectedChar = i;
     big.style.backgroundImage = `url('${sheetUrl(i)}')`;
-    charName.textContent = `${nameOf(i)} ${i}`;
+    charName.textContent = `${nameOf(i)}`;
 
     document.querySelectorAll('.char-thumb').forEach((t) => t.classList.remove('selected'));
     el.classList.add('selected');
   }
 
   big.style.backgroundImage = `url('${sheetUrl(1)}')`;
-  charName.textContent = `${nameOf(1)} 1`;
+  charName.textContent = `${nameOf(1)}`;
 
   // Oyun Başlatma Mantığı
   const overlay = document.getElementById('menu-overlay');
