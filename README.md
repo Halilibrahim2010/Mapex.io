@@ -1,9 +1,114 @@
 # Mapex.io
 
-Mapex.io, Phaser.js ve HTML5/JS altyapısıyla geliştirilmiş, tarayıcıda çalışan 2D
-kuşbakışı bir oyundur. "Başlaması kolay, ustalaşması zor" bir oynanış sunar.
-Backend tarafında Node.js kullanılan proje, açık kaynak kodlu yapısı sayesinde
-doğrudan çatallanmaya (fork) ve özelleştirilmeye uygundur.
+Mapex.io, tarayıcıda çalışan 2D kuşbakışı bir pixel art toplama ve keşif oyunudur.
+Yeşil çayırlar, göller ve ormanlarla dolu sonsuz bir dünyada doğarsın; ağaçları
+kessin, taşları toplayın, envanterini doldurun — istersen tek başına, istersen
+arkadaşlarınla. Gündüz gezip toplar, gece lambaların ışığında ateş böceklerini
+izlersin.
+
+![Oyundan bir görünüm](image.png)
+
+Felsefemiz basit: **başlaması kolay, ustalaşması zor.** Kod tabanı tamamen açık
+kaynaklıdır; fork edip kendi oyununu çıkarmak için tasarlandı — sihirli numara
+yok, her şey tek bir veri dosyasından okunur.
+
+---
+
+## Özellikler
+
+- **Sonsuz, deterministik dünya** — Harita prosedürel üretilir ama rastgele
+  değildir: her oyuncu aynı dünyayı görür. Çayır, göller, ağaçlar, kayalar,
+  taşlar, kütükler, çiçekler, gaz lambaları…
+- **Gündüz / gece döngüsü** — 1 oyun günü = 15 gerçek dakika. Gece gerçekten
+  karanlıktır: oyuncunun ışığı, gaz lambaları ve ateş böcekleri dışında her şey
+  kapkara olur. Sağ üstteki saat herkeste aynıdır (sunucu saati).
+- **Toplama ve kesme** — Taşları E ile al, ağaç ve kütükleri basılı sol tıkla
+  kes. Kırılan nesnelerden odun düşer; yere düşen her şeyi herkes görebilir ve
+  alabilir.
+- **Envanter ve hotbar** — 15 slotluk envanter, ekranın altında 5 slotluk
+  hızlı çubuk. Q ile eşya bırakırsın; bıraktığın eşya dünyada görünür.
+- **Çok oyunculu** — Sunucuya bağlanan herkes aynı dünyayı paylaşır: birinin
+  kestiği ağaç sende de düşer, bıraktığı eşyayı sen alabilirsin, sohbet eder,
+  birbirinizin animasyonlarını görürsünüz.
+- **Sohbet** — Genel mesaj + özel mesaj (`#isim mesaj`) + bahsetme (`@isim`).
+  Sunucu mesajları doğrular ve geçmişi saklar.
+- **Hesap sistemi (opsiyonel)** — Misafir olarak oynayabilir ya da hesap
+  oluşturabilirsin. Hesabın altın, elmas ve seviyesi olur; envanterin veri
+  tabanına kaydedilir ve nereden bağlanırsan bağlan, seninle gelir.
+- **Tamamen prosedürel ses** — Kuşlar, cırcır böcekleri, su uğultusu dahil tüm
+  sesler Web Audio ile anlık üretilir. Projede tek bir ses dosyası bile yok.
+- **Ayarlara saygı duyan arayüz** — Ses seviyeleri, tüm tuş atamaları ve sohbet
+  tercihleri oyun içi panelde değiştirilebilir.
+
+## Nasıl Oynanır
+
+1. Menüden bir karakter seç, adını gir, **OYUNA GİR**'e bas.
+2. **WASD** veya **ok tuşları** ile yürü.
+3. Yakınındaki taşı görünce **E**'ye bas: taşı alırsın.
+4. Ağaç veya kütüğün üstüne gelip **sol tıkı basılı tut**: ilerleme çubuğu
+   dolar, ağaç devrilir ve odun yere düşer.
+5. Yere düşen odundan **E** ile al, **I** ile envanterini aç, **Q** ile eşya
+   bırak.
+6. Gece gelmeden kendine bir plan yap — ya da **Shift**'e basılı tutup zamanı
+   hızlandır, günü atla.
+
+### Kontroller
+
+| Tuş | İşlev |
+|---|---|
+| WASD / Ok tuşları | Hareket |
+| Sol tık (basılı) | Ağaç / kütük kes |
+| E | Yerdeki eşyayı al |
+| I | Envanteri aç / kapat |
+| Q | Envanterden eşya bırak |
+| Shift (basılı) | Zamanı hızlandır |
+| Enter | Sohbeti aç / mesaj gönder |
+| ESC | Menü — envanteri ve panelleri kapatır |
+
+> Tüm tuşlar oyun içi **Ayarlar** panelinden değiştirilebilir.
+
+---
+
+## Çalıştırma
+
+```bash
+cd server
+npm install
+npm start          # http://localhost:12090
+```
+
+Sunucu kapalıysa üzülme: istemci bunu fark eder ve otomatik olarak **tek
+kişilik yerel moda** geçer. Yani oyunu denemek için asla sunucu kurmak
+zorunda değilsin — ama arkadaşlarınla oynamak için çalıştırman gerekir.
+
+- Oyun portu `shared/serverSettings.json` dosyasından değiştirilebilir.
+- Ekran/ölçekleme ayarları (tile boyutu, 3× ölçek, görüş alanı, font)
+  `shared/scalingSettings.json` dosyasındadır.
+
+## Çok Oyunculu ve Hesaplar
+
+Sunucu **yetkilidir**: envanterin, dünyadan kaldırılan nesneler, yere düşen
+eşyalar ve oyun saati hep sunucuda tutulur. İstemci yalnızca tahminde
+bulunur, gerçeği sunucudan alır — bu yüzden hile yapmak zor, senkronizasyon
+sağlamdır.
+
+- **Misafir:** hesap açmadan oynarsın; envanterin tarayıcı oturumuna bağlıdır.
+- **Hesap:** e-posta + kullanıcı adı + şifre ile kayıt olursun; altın, elmas,
+  seviye ve kalıcı envanter kazanırsın. PostgreSQL varsa kalıcıdır, yoksa
+  sunucu bellek içi çalışır ve yine de eksiksiz oynanır.
+
+## Oyun İçi Ayarlar
+
+ESC menüsünden **Ayarlar**'ı aç:
+
+- Ana ses ve ortam sesleri (kuşlar, cırcırlar, su)
+- Her tuşun ataması (hareket, alma, envanter, bırakma, zaman, sohbet)
+- Sohbet tercihleri: seni "ben" sayacak ek ad ve bahsetme kelimeleri
+
+---
+
+## Teknik Bakış (fork edecekler için)
+
 
 ## Çalıştırma
 
