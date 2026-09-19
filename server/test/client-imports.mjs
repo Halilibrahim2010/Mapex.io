@@ -8,7 +8,7 @@ global.window = {
   dispatchEvent: () => {},
   innerWidth: 1280,
   innerHeight: 720,
-  location: { hostname: 'localhost', protocol: 'http:', port: '3019', href: 'http://localhost:3019/' }
+  location: { hostname: 'localhost', protocol: 'http:', port: '12090', href: 'http://localhost:12090/' }
 };
 global.document = {
   getElementById: () => null,
@@ -25,7 +25,7 @@ global.Phaser = {
   GameObjects: { Container: class {}, Sprite: class {}, Text: class {}, Graphics: class {} }
 };
 global.fetch = async () => ({ ok: true, status: 200, json: async () => ({}) });
-global.location = { hostname: 'localhost', protocol: 'http:', port: '3019', href: 'http://localhost:3019/' };
+global.location = { hostname: 'localhost', protocol: 'http:', port: '12090', href: 'http://localhost:12090/' };
 
 const modules = [
   'src/core/ObjectDefs.js',

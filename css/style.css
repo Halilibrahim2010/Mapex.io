@@ -4,6 +4,13 @@ html, body, canvas, input, button, div, span, h1, p {
   cursor: url('../assets/cross.png') 25 25, default !important;
 }
 
+/* Monocraft: oyun içi metin ve UI için varsayılan piksel font. */
+@font-face {
+  font-family: "Monocraft";
+  src: url("../font/Monocraft.ttf") format("truetype");
+  font-display: swap;
+}
+
 @font-face {
   font-family: "PixelOperator";
   src: url("../font/PixelOperator.ttf") format("truetype");
@@ -15,12 +22,13 @@ body {
   padding: 0;
   overflow: hidden;
   background: #0a0f0a;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Monocraft', 'Segoe UI', Arial, sans-serif;
 }
 
 #game-container {
   width: 100vw;
   height: 100vh;
+  image-rendering: pixelated;
 }
 
 /* ============ GİRİŞ MENÜSÜ ============ */

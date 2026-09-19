@@ -1,7 +1,7 @@
 // Ayarlar paneli tarayıcı testi: panel gerçekten açılıyor mu, kaydırıcı gerçek
 // fare sürüklemesiyle çalışıyor mu, tuş ataması kaydediliyor mu ve ESC pause
 // menüsüyle çakışmıyor mu? Edge/Chrome CDP ile çalışır:
-//   node test/browser-settings.mjs        (sunucu 3019'da çalışıyor olmalı)
+//   node test/browser-settings.mjs        (sunucu 12090'da çalışıyor olmalı)
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -9,7 +9,7 @@ import path from 'node:path';
 
 const EDGE = process.env.BROWSER_PATH
   || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const PAGE = process.env.BASE_URL || 'http://localhost:3019/index.html';
+const PAGE = process.env.BASE_URL || 'http://localhost:12090/index.html';
 const PORT = 9335;
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'mapex-sets-'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

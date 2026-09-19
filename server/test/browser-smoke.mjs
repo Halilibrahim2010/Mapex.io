@@ -8,7 +8,7 @@ import path from 'node:path';
 
 const EDGE = process.env.BROWSER_PATH
   || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const PAGE = process.env.BASE_URL || 'http://localhost:3019/index.html';
+const PAGE = process.env.BASE_URL || 'http://localhost:12090/index.html';
 const PORT = 9333;
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'mapex-cdp-'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -25,7 +25,7 @@ export class InteractionSystem {
     const y = record.y === undefined ? record.data.y : record.y;
     if (!this.hoverText) {
       this.hoverText = this.scene.add.text(x, y - 30, label, {
-        fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#ffe9b0',
+              fontFamily: 'Monocraft', fontSize: '12px', color: '#ffe9b0',
         stroke: '#000000', strokeThickness: 2
       }).setOrigin(0.5).setDepth(9500);
     } else {

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const base = process.env.BASE_URL || 'http://localhost:3019';
+const base = process.env.BASE_URL || 'http://localhost:12090';
 const data = JSON.parse(fs.readFileSync(path.join(root, 'shared', 'objectDefs.json'), 'utf8'));
 
 const sub = (p, v) => p.replace('{n}', String(v));

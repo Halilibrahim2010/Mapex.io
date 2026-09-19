@@ -1,9 +1,9 @@
 // Uçtan uca: ağaç kesme → 1-3 odun düşer → toplanır → envantere girer.
 // Ayrıca animasyon durumunun (idle/walk/chop) karşı tarafa doğru geçtiği
-// doğrulanır. Sunucu 3019 portunda çalışıyor olmalı.
+// doğrulanır. Sunucu 12090 portunda çalışıyor olmalı.
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:3019';
+const URL = 'http://localhost:12090';
 const results = [];
 function check(name, ok, extra = '') {
   results.push({ name, ok });

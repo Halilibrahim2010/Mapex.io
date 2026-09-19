@@ -39,7 +39,7 @@ export class Hud {
 
   _text(x, y, value, color) {
     return this.scene.add.text(x, y, value, {
-      fontFamily: 'PixelOperator',
+      fontFamily: 'Monocraft',
       fontSize: '20px',
       fontStyle: 'bold',
       color,

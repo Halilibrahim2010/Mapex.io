@@ -66,7 +66,7 @@ export class SettingsPanel {
     group.add(scene.add.rectangle(cw / 2, ch / 2, PANEL_W, PANEL_H, 0x1c241c)
       .setDepth(UI_DEPTH + 1).setScrollFactor(0).setInteractive().setStrokeStyle(2, 0x4cd964));
     group.add(scene.add.text(cw / 2, ch / 2 - PANEL_H / 2 + 30, 'AYARLAR', {
-      fontFamily: 'PixelOperator', fontSize: '30px', fontStyle: 'bold', color: '#c8f7bf'
+      fontFamily: 'Monocraft', fontSize: '30px', fontStyle: 'bold', color: '#c8f7bf'
     }).setOrigin(0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0));
 
     let y = ch / 2 - PANEL_H / 2 + 84;
@@ -76,7 +76,7 @@ export class SettingsPanel {
     y += 78;
 
     group.add(scene.add.text(cw / 2, y, 'TUŞ ATAMALARI', {
-      fontFamily: 'PixelOperator', fontSize: '16px', color: '#4cd964'
+      fontFamily: 'Monocraft', fontSize: '16px', color: '#4cd964'
     }).setOrigin(0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0));
     y += 40;
 
@@ -87,7 +87,7 @@ export class SettingsPanel {
 
     y += 20;
     group.add(scene.add.text(cw / 2, y, 'SOHBET', {
-      fontFamily: 'PixelOperator', fontSize: '16px', color: '#4cd964'
+      fontFamily: 'Monocraft', fontSize: '16px', color: '#4cd964'
     }).setOrigin(0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0));
     y += 30;
 
@@ -187,7 +187,7 @@ export class SettingsPanel {
     const cy = y + 8;
 
     this.group.add(scene.add.text(left, y - 10, label, {
-      fontFamily: 'PixelOperator', fontSize: '18px', color: '#ffffff'
+      fontFamily: 'Monocraft', fontSize: '18px', color: '#ffffff'
     }).setDepth(UI_DEPTH + 2).setScrollFactor(0));
 
     this.group.add(scene.add.rectangle(left + TRACK_W / 2, cy, TRACK_W, TRACK_H, 0x0d130d)
@@ -206,7 +206,7 @@ export class SettingsPanel {
     this.group.add(hit);
 
     const valueText = scene.add.text(left + TRACK_W + 14, y, '', {
-      fontFamily: 'PixelOperator', fontSize: '15px', color: '#8fae8f'
+      fontFamily: 'Monocraft', fontSize: '15px', color: '#8fae8f'
     }).setOrigin(0, 0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0);
     this.group.add(valueText);
 
@@ -241,13 +241,13 @@ export class SettingsPanel {
     const scene = this.scene;
     const cw = scene.cameras.main.width;
     this.group.add(scene.add.text(cw / 2 - PANEL_W / 2 + 24, y, label, {
-      fontFamily: 'PixelOperator', fontSize: '18px', color: '#ffffff'
+      fontFamily: 'Monocraft', fontSize: '18px', color: '#ffffff'
     }).setDepth(UI_DEPTH + 2).setScrollFactor(0));
 
     const btn = scene.add.rectangle(cw / 2 + PANEL_W / 2 - 90, y, 70, 30, 0x333333)
       .setDepth(UI_DEPTH + 2).setScrollFactor(0).setInteractive();
     const btnText = scene.add.text(btn.x, y, getSettings().keys[action], {
-      fontFamily: 'PixelOperator', fontSize: '17px', fontStyle: 'bold', color: '#ffe9b0'
+      fontFamily: 'Monocraft', fontSize: '17px', fontStyle: 'bold', color: '#ffe9b0'
     }).setOrigin(0.5).setDepth(UI_DEPTH + 3).setScrollFactor(0);
     this.group.add(btn);
     this.group.add(btnText);
@@ -276,13 +276,13 @@ export class SettingsPanel {
     const scene = this.scene;
     const cw = scene.cameras.main.width;
     this.group.add(scene.add.text(cw / 2 - PANEL_W / 2 + 24, y, label, {
-      fontFamily: 'PixelOperator', fontSize: '14px', color: '#8fae8f'
+      fontFamily: 'Monocraft', fontSize: '14px', color: '#8fae8f'
     }).setOrigin(0, 0.5).setDepth(UI_DEPTH + 2).setScrollFactor(0));
 
     const box = scene.add.rectangle(cw / 2, y + 18, TEXT_ROW_W, TEXT_ROW_H, 0x0d130d)
       .setDepth(UI_DEPTH + 2).setScrollFactor(0).setInteractive().setStrokeStyle(1, 0x333333);
     const boxText = scene.add.text(cw / 2 - TEXT_ROW_W / 2 + 8, y + 18, '', {
-      fontFamily: 'PixelOperator', fontSize: '15px', color: '#ffffff'
+      fontFamily: 'Monocraft', fontSize: '15px', color: '#ffffff'
     }).setOrigin(0, 0.5).setDepth(UI_DEPTH + 3).setScrollFactor(0);
     this.group.add(box);
     this.group.add(boxText);
@@ -362,7 +362,7 @@ export class SettingsPanel {
       .setDepth(UI_DEPTH + 2).setScrollFactor(0).setInteractive();
     this.group.add(btn);
     this.group.add(scene.add.text(x, y, 'GERİ', {
-      fontFamily: 'PixelOperator', fontSize: '20px', fontStyle: 'bold', color: '#ffffff'
+      fontFamily: 'Monocraft', fontSize: '20px', fontStyle: 'bold', color: '#ffffff'
     }).setOrigin(0.5).setDepth(UI_DEPTH + 3).setScrollFactor(0));
     btn.on('pointerover', () => btn.setFillStyle(0x4cd964));
     btn.on('pointerout', () => btn.setFillStyle(0x333333));

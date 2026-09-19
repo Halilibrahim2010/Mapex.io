@@ -22,7 +22,7 @@ export class RemotePlayer {
     this.sprite.play(`${this.charKey}_idle`);
 
     this.nameText = scene.add.text(x, y, this.name, {
-      fontFamily: "PixelOperator",
+      fontFamily: "Monocraft",
       fontSize: '20px',
       color: '#ffffff'
     }).setOrigin(0.5)

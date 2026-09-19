@@ -2,7 +2,7 @@ import { RemotePlayer } from '../entities/RemotePlayer.js';
 import { LocalServer } from './LocalServer.js';
 import { ANIM_STATE } from '../entities/AnimState.js';
 
-const SERVER_URL = 'http://' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost') + ':3019';
+const SERVER_URL = 'http://' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost') + ':' + (window.__MAPEX_SERVER_PORT || 12090);
 
 export class NetworkManager {
   constructor(scene, name = 'Oyuncu', char = 1, session = null) {

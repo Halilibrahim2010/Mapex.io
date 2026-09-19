@@ -1,0 +1,24 @@
+{
+  "world": {
+    "virtualHeight": 360,
+    "verticalTiles": 11,
+    "scale": 3
+  },
+  "camera": {
+    "fov": {
+      "type": "hor+",
+      "verticalTiles": 11,
+      "description": "Dikey görüş alanı sabittir; ekran en-boy oranına göre yalnızca yatay genişler."
+    }
+  },
+  "render": {
+    "pixelArt": true,
+    "roundPixels": true,
+    "clearBeforeRender": true,
+    "filter": "nearest"
+  },
+  "font": {
+    "family": "Monocraft",
+    "path": "font/Monocraft.ttf"
+  }
+}

@@ -1,7 +1,7 @@
-// Auth HTTP uçlarının sözleşmesi: sunucu 3019'da çalışıyor olmalı.
+// Auth HTTP uçlarının sözleşmesi: sunucu 12090'da çalışıyor olmalı.
 // Asıl doğrulanan: jeton geçersizse oyunun KİLİTLENMEDİĞİ (misafir döner).
 // Çalıştır:  node test/auth-http.mjs
-const BASE = 'http://localhost:3019/auth';
+const BASE = 'http://localhost:12090/auth';
 
 // Hız sınırı test kancası: sunucu MAPEX_ALLOW_TEST_HOOKS=1 ile açılmalı.
 // Yoksa bu çağrı sessizce yok sayılır ve testler limiti aşarsa görünür şekilde
@@ -126,6 +126,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.log('  ✗ test çalıştırılamadı (sunucu 3019 açık mı?):', error.message);
+  console.log('  ✗ test çalıştırılamadı (sunucu 12090 açık mı?):', error.message);
   process.exit(1);
 });

@@ -1,9 +1,9 @@
 // Uçtan uca sohbet testi: genel mesaj herkese, özel mesaj yalnızca hedefe.
 // Ayrıca geçmiş isteği ve doğrulama (boş/uzun metin) denetlenir.
-// Sunucu 3019'da çalışıyor olmalı:  node test/e2e-chat.mjs
+// Sunucu 12090'da çalışıyor olmalı:  node test/e2e-chat.mjs
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:3019';
+const URL = 'http://localhost:12090';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const results = [];

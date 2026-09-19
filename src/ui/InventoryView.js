@@ -57,8 +57,8 @@ export class InventoryView {
 
   _createHoverText(depth) {
     if (this._hoverText && this._hoverText.active) return this._hoverText;
-    this._hoverText = this.scene.add.text(0, 0, '', {
-      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#ffe9b0',
+        this._hoverText = this.scene.add.text(0, 0, '', {
+      fontFamily: 'Monocraft', fontSize: '13px', color: '#ffe9b0',
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5).setDepth(depth).setScrollFactor(0).setVisible(false);
     return this._hoverText;
@@ -91,7 +91,7 @@ export class InventoryView {
         .setDepth(depth).setScrollFactor(0).setVisible(false);
       group.add(icon);
       const countText = this.scene.add.text(x + slot / 2 - 4, startY + slot / 2 - 6, '', {
-        fontFamily: 'PixelOperator', fontSize: '16px', fontStyle: 'bold',
+        fontFamily: 'Monocraft', fontSize: '16px', fontStyle: 'bold',
         color: '#ffffff', stroke: '#000000', strokeThickness: 2
       }).setOrigin(1, 1).setDepth(depth).setScrollFactor(0);
       group.add(countText);
@@ -159,10 +159,10 @@ export class InventoryView {
     group.add(this.scene.add.rectangle(px, py, pw, ph)
       .setStrokeStyle(2, 0x8a5a2b, 1).setDepth(d).setScrollFactor(0));
     group.add(this.scene.add.text(px, py - ph / 2 + 34, 'Envanter', {
-      fontFamily: 'PixelOperator', fontSize: '32px', fontStyle: 'bold',
+      fontFamily: 'Monocraft', fontSize: '32px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5).setDepth(d).setScrollFactor(0));
-    group.add(this.scene.add.rectangle(px, py - ph / 2 + 58, pw - 90, 2, 0x8a5a2b, 0.9)
+    group.add(this.scene.add.rectangle(px, py - ph / 2 + 68, pw - 90, 2, 0x8a5a2b, 0.9)
       .setDepth(d).setScrollFactor(0));
 
     const grid = { cols: 5, rows: 3, slot: 64, gap: 14 };
@@ -177,12 +177,11 @@ export class InventoryView {
         const index = r * grid.cols + c;
         const x = gx0 + c * (grid.slot + grid.gap);
         const y = gy0 + r * (grid.slot + grid.gap);
-        cells.push(this._createCell(group, index, x, y, grid.slot, d));
+        cells.push(this._createCell(group, index, x, y + 20, grid.slot, d));
       }
     }
 
     this.window = { group, cells, items: [] };
-    group.add(this._createFooter(px, py, ph, d));
     this.refresh(items);
   }
 
@@ -194,33 +193,18 @@ export class InventoryView {
       .setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(icon);
     const countText = this.scene.add.text(x + slot / 2 - 5, y + slot / 2 - 4, '', {
-      fontFamily: 'PixelOperator', fontSize: '18px', fontStyle: 'bold',
+      fontFamily: 'Monocraft', fontSize: '18px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(1, 1).setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(countText);
     const label = this.scene.add.text(x, y + slot / 2 + 9, '', {
-      fontFamily: 'PixelOperator', fontSize: '16px', color: '#e8c98a',
+      fontFamily: 'Monocraft', fontSize: '16px', color: '#e8c98a',
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5, 0).setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(label);
 
     bg.on('pointerdown', () => this.select(index, bg));
     return { bg, icon, countText, label };
-  }
-
-  _createFooter(px, py, ph, d) {
-    const statsText = this.scene.add.text(px, py + ph / 2 - 54, '', {
-      fontFamily: 'PixelOperator', fontSize: '18px', fontStyle: 'bold',
-      color: '#ffffff', stroke: '#000000', strokeThickness: 2
-    }).setOrigin(0.5).setDepth(d).setScrollFactor(0);
-    this.window.statsText = statsText;
-    const hint = this.scene.add.text(
-      px, py + ph / 2 - 24,
-      'I - Kapat   •   Slot seç, sayı yaz, Enter: yere bırak', {
-        fontFamily: 'PixelOperator', fontSize: '16px', color: '#9a8a6a'
-      }
-    ).setOrigin(0.5).setDepth(d).setScrollFactor(0);
-    return this.scene.add.container(0, 0, [statsText, hint]).setDepth(d).setScrollFactor(0);
   }
 
   // Slotlar envanterin yerleşik sırasını gösterir; seçili slot kare ile işaretlenir.
@@ -241,7 +225,7 @@ export class InventoryView {
   }
 
   // Hover ve içerik yenileme: her açık frame'de çağrılır.
-  refresh(items, stats) {
+  refresh(items) {
     if (!this.window) return;
     this.window.items = items;
     const { cells } = this.window;
@@ -266,7 +250,6 @@ export class InventoryView {
       cell.label.setText(this.labelOf(slotData.itemId)).setVisible(true);
       this._bindHover(cell, i, slotData);
     }
-    if (stats) this.window.statsText.setText(stats);
   }
 
   _bindHover(cell, index, slotData) {

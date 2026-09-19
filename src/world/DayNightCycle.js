@@ -61,8 +61,8 @@ export class DayNightCycle {
     this._createNightCanvas(w, h);
     this.overlay = this.scene.add.image(0, 0, 'night_canvas')
       .setOrigin(0, 0).setScrollFactor(0).setDepth(NIGHT_OVERLAY_DEPTH);
-    this.clockText = this.scene.add.text(w - 12, 12, '', {
-      fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold',
+        this.clockText = this.scene.add.text(w - 12, 12, '', {
+      fontFamily: 'Monocraft', fontSize: '16px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(NIGHT_OVERLAY_DEPTH + 1);
     this._bindTimeSkipKey();

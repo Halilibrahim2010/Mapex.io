@@ -7,9 +7,9 @@ export const TOKEN_KEY = 'mapex.session.token';
 export const ACCOUNT_KEY = 'mapex.session.name';
 
 export function authBase() {
-  if (typeof window === 'undefined') return 'http://localhost:3019';
+  if (typeof window === 'undefined') return 'http://localhost:12090';
   const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-  return `${protocol}//${window.location.hostname}:3019`;
+  return `${protocol}//${window.location.hostname}:12090`;
 }
 
 // Jeton her zaman tek anahtarda tutulur (sayfa yenilendiğinde oturum sürer).

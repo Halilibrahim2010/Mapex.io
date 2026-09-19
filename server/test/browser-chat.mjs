@@ -1,7 +1,7 @@
 // Sohbet penceresi tarayıcı testi: Enter ile açılıyor mu, yazı/gönderim
 // çalışıyor mu, # özel mesaj ve @ bahsetme ayrışıyor mu, ESC kapatıyor mu,
 // köşeden boyutlandırma gerçekten pencereyi büyütüyor mu?
-// Edge/Chrome CDP ile çalışır (sunucu 3019'da çalışıyor olmalı):
+// Edge/Chrome CDP ile çalışır (sunucu 12090'da çalışıyor olmalı):
 //   node test/browser-chat.mjs
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -10,7 +10,7 @@ import path from 'node:path';
 
 const EDGE = process.env.BROWSER_PATH
   || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const PAGE = process.env.BASE_URL || 'http://localhost:3019/index.html';
+const PAGE = process.env.BASE_URL || 'http://localhost:12090/index.html';
 const PORT = 9336;
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'mapex-chat-'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

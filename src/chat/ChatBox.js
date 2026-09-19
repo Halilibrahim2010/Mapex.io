@@ -139,10 +139,10 @@ export class ChatBox {
       .setOrigin(0, 0).setDepth(depth).setScrollFactor(0).setInteractive());
 
     group.add(scene.add.text(ox + PADDING, oy + PADDING, TITLE, {
-      fontFamily: 'PixelOperator', fontSize: '16px', fontStyle: 'bold', color: COLORS.title
+      fontFamily: 'Monocraft', fontSize: '16px', fontStyle: 'bold', color: COLORS.title
     }).setOrigin(0, 0).setDepth(depth).setScrollFactor(0));
     group.add(scene.add.text(ox + w - PADDING, oy + PADDING, 'Koseden boyutlandir', {
-      fontFamily: 'PixelOperator', fontSize: '12px', color: COLORS.name
+      fontFamily: 'Monocraft', fontSize: '12px', color: COLORS.name
     }).setOrigin(1, 0).setDepth(depth).setScrollFactor(0));
 
     const log = this._logRect();
@@ -174,7 +174,7 @@ export class ChatBox {
     const wrapWidth = Math.max(60, this._logRect().w - 12);
     for (let i = 0; i < MAX_ROWS; i++) {
       const text = scene.add.text(0, 0, '', {
-        fontFamily: 'PixelOperator', fontSize: '15px', color: COLORS.chat,
+        fontFamily: 'Monocraft', fontSize: '15px', color: COLORS.chat,
         wordWrap: { width: wrapWidth, useAdvancedWrap: true }
       }).setOrigin(0, 0).setDepth(depth + 1).setScrollFactor(0).setVisible(false);
       group.add(text);
@@ -197,12 +197,12 @@ export class ChatBox {
 
     // Ozel mesaj kipi (#) vurgulanir: yazinin bir kisiye gidecegi belli olsun.
     this.inputPrefix = scene.add.text(x + 8, y + 9, '>', {
-      fontFamily: 'PixelOperator', fontSize: '16px', fontStyle: 'bold', color: COLORS.name
+      fontFamily: 'Monocraft', fontSize: '16px', fontStyle: 'bold', color: COLORS.name
     }).setOrigin(0, 0).setDepth(depth + 1).setScrollFactor(0);
     group.add(this.inputPrefix);
 
     this.inputText = scene.add.text(x + 24, y + 9, '', {
-      fontFamily: 'PixelOperator', fontSize: '16px', color: '#ffffff',
+      fontFamily: 'Monocraft', fontSize: '16px', color: '#ffffff',
       wordWrap: { width: width - 40 }
     }).setOrigin(0, 0).setDepth(depth + 1).setScrollFactor(0);
     group.add(this.inputText);
@@ -218,7 +218,7 @@ export class ChatBox {
     const origin = this.origin();
     const size = 22;
     const mark = scene.add.text(origin.x + this.width - size + 4, origin.y + this.height - size + 2, '\u2b1a', {
-      fontFamily: 'PixelOperator', fontSize: '14px', color: COLORS.name, alpha: 0.8
+      fontFamily: 'Monocraft', fontSize: '14px', color: COLORS.name, alpha: 0.8
     }).setOrigin(0, 0).setDepth(depth + 1).setScrollFactor(0);
     group.add(mark);
     const handle = scene.add.rectangle(

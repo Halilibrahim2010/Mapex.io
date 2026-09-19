@@ -1,9 +1,9 @@
 // Uçtan uca (iki gerçek istemci): # özel mesaj yalnızca hedefte görünür,
 // @ bahsetme karşı tarafta bildirim üretir.
-// Sunucu 3019'da çalışıyor olmalı:  node test/e2e-chat-clients.mjs
+// Sunucu 12090'da çalışıyor olmalı:  node test/e2e-chat-clients.mjs
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:3019';
+const URL = 'http://localhost:12090';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const results = [];

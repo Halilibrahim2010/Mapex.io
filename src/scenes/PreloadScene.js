@@ -12,7 +12,7 @@ export class PreloadScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
     this.add.text(width / 2, height / 2, 'Yükleniyor...', {
-      fontFamily: 'PixelOperator', fontSize: '28px', color: '#ffe9b0'
+      fontFamily: 'Monocraft', fontSize: '28px', color: '#ffe9b0'
     }).setOrigin(0.5);
 
     this.loadCharacters();

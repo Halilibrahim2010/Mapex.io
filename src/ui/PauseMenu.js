@@ -79,7 +79,7 @@ export class PauseMenu {
 
     // Bottom info line.
     this.infoText = this.scene.add.text(cw / 2, ch - 70, '', {
-      fontFamily: 'PixelOperator',
+      fontFamily: 'Monocraft',
       fontSize: '14px',
       color: '#cccccc',
       stroke: '#000000',
@@ -89,11 +89,11 @@ export class PauseMenu {
 
     const self = this;
     const items = [
-      { label: 'Resume', action: () => self.close() },
-      { label: 'Settings', action: () => { self.close(); if (self.scene.settingsPanel) self.scene.settingsPanel.openPanel(() => self.toggle()); } },
-      { label: 'Equipment', action: () => { self.close(); self.callbacks.onOpenInventory(); } },
-      { label: 'Craft', action: () => self.setInfo('Zanaat yakında eklenecek') },
-      { label: 'Quit', action: () => { window.location.reload(); } }
+      { label: 'Devam Et', action: () => self.close() },
+      { label: 'Ayarlar', action: () => { self.close(); if (self.scene.settingsPanel) self.scene.settingsPanel.openPanel(() => self.toggle()); } },
+      { label: 'Envanter', action: () => { self.close(); self.callbacks.onOpenInventory(); } },
+      { label: 'Zanaat', action: () => self.setInfo('Zanaat yakında eklenecek') },
+      { label: 'Ana Menü', action: () => { window.location.reload(); } }
     ];
 
     const bw = 260;
@@ -108,7 +108,7 @@ export class PauseMenu {
       group.add(bg);
 
       const label = this.scene.add.text(cw / 2, y, it.label, {
-        fontFamily: 'PixelOperator',
+        fontFamily: 'Monocraft',
         fontSize: '24px',
         fontStyle: 'bold',
         color: '#ffffff',

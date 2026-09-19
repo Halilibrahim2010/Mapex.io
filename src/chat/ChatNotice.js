@@ -31,7 +31,7 @@ export class ChatNotice {
     group.add(scene.add.rectangle(0, 0, w, NOTICE_H, fill, 0.92).setOrigin(0, 0)
       .setDepth(UI_DEPTH + 6).setScrollFactor(0).setStrokeStyle(2, 0xd9c07a, 0.9));
     group.add(scene.add.text(0, 0, note.text, {
-      fontFamily: 'PixelOperator', fontSize: '16px', fontStyle: 'bold',
+      fontFamily: 'Monocraft', fontSize: '16px', fontStyle: 'bold',
       color: '#ffffff', stroke: '#000000', strokeThickness: 3
     }).setOrigin(0, 0.5).setDepth(UI_DEPTH + 7).setScrollFactor(0));
 

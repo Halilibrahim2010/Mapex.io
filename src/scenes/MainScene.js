@@ -174,7 +174,7 @@ export class MainScene extends Phaser.Scene {
     this.player.setCharacter(`char${charId}`);
     this.player.activateInput();
     this.playerNameText = this.add.text(this.player.x, this.player.y, this.playerName, {
-      fontFamily: "PixelOperator",
+      fontFamily: "Monocraft",
       fontSize: '20px',
       color: '#ffffff'
     }).setOrigin(0.5)
@@ -201,7 +201,6 @@ export class MainScene extends Phaser.Scene {
     this._layoutChatUi();
     this._chatKeyUnsubscribe = onSettingsChange(() => {
       this.chat.syncSettings();
-      this._refreshChatShortcuts();
     });
   }
 
@@ -227,25 +226,11 @@ export class MainScene extends Phaser.Scene {
     if (open && this.chatNotice) this.chatNotice.clear();
   }
 
-  // Kısayol ayarı değişince yazı kutusunun ipucu yenilenir.
-  _refreshChatShortcuts() {
-    if (this.chatHint) this.chatHint.setText(this._chatHintText());
-  }
-
-  _chatHintText() {
-    const keys = getSettings().keys;
-    return `${keys.chatOpen}: sohbet   •   ${keys.chatSend}: gönder   •   ESC: kapat   •   #ad: özel   •   @ad: bahset`;
-  }
-
   // Sohbet penceresi sol alt köşede durur; ekran ölçüsü değişince yeniden yerleşir.
   _layoutChatUi() {
     if (!this.chatBox) return;
     const origin = this.chatBox.origin();
     if (this.chatHint) this.chatHint.destroy();
-    this.chatHint = this.add.text(origin.x, origin.y - 22, this._chatHintText(), {
-      fontFamily: 'PixelOperator', fontSize: '14px', color: '#8fae8f',
-      stroke: '#000000', strokeThickness: 3
-    }).setOrigin(0, 1).setScrollFactor(0).setDepth(UI_DEPTH - 2);
     if (this.chatBox.open) this.chatBox.rebuild();
   }
 

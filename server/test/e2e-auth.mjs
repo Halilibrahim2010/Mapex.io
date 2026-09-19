@@ -1,12 +1,12 @@
 // Uçtan uca: hesap oturumu soket üzerinden oyuna akıyor mu?
-// Sunucu 3019'da çalışıyor olmalı:  node test/e2e-auth.mjs
+// Sunucu 12090'da çalışıyor olmalı:  node test/e2e-auth.mjs
 //
 // Doğrulanan mimari iddiası: OYUN, HESABIN TÜRÜNÜ BİLMEZ. Sunucu oturumu
 // çözer, oyuna yalnızca storageKey ve ekonomi verir; oyun tarafı misafir ve
 // kayıtlı oyuncu için aynı kodu çalıştırır.
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:3019';
+const URL = 'http://localhost:12090';
 const API = URL + '/auth';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -51,7 +51,7 @@ async function main() {
   }).then((r) => r.json());
   const token = registered.token;
   if (!token) {
-    console.error('Kayıt başarısız (sunucu 3019 açık mı? test kancası açık mı?):', registered);
+    console.error('Kayıt başarısız (sunucu 12090 açık mı? test kancası açık mı?):', registered);
     process.exit(1);
   }
 
@@ -104,6 +104,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.log('  ✗ test çalıştırılamadı (sunucu 3019 açık mı?):', error.message);
+  console.log('  ✗ test çalıştırılamadı (sunucu 12090 açık mı?):', error.message);
   process.exit(1);
 });

@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const fs = require('fs');
 const path = require('path');
 const { Server } = require('socket.io');
 
@@ -41,5 +42,14 @@ const clock = new GameClock(io);
 clock.start();
 attachSocketHandlers(io, world, store, clock, players, authLayer);
 
-const PORT = process.env.PORT || 3019;
+// Sunucu ayarları shared/serverSettings.json'dan okunur (yeni port: 12090).
+const serverSettingsPath = path.join(__dirname, '..', 'shared', 'serverSettings.json');
+let serverSettings = { port: 12090, corsOrigin: '*' };
+try {
+  serverSettings = { ...serverSettings, ...JSON.parse(fs.readFileSync(serverSettingsPath, 'utf8')) };
+} catch (error) {
+  console.warn('[server] serverSettings.json okunamadı, varsayılanlar kullanılıyor:', error.message);
+}
+
+const PORT = process.env.PORT || serverSettings.port;
 server.listen(PORT, () => console.log(`mapex.io sunucu ${PORT} portunda çalışıyor`));

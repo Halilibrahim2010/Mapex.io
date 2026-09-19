@@ -10,7 +10,7 @@ doğrudan çatallanmaya (fork) ve özelleştirilmeye uygundur.
 ```bash
 cd server
 npm install
-npm start          # http://localhost:3019
+npm start          # http://localhost:12090
 ```
 
 Sunucu kapalıysa istemci otomatik olarak yerel (tek kişilik) moda geçer.

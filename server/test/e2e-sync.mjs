@@ -1,8 +1,8 @@
 // Uçtan uca: kesme senkronu, düşen odun, envanter ikonları ve IP tabanlı
-// envanter kimliği. Sunucu 3019'da çalışıyor olmalı.
+// envanter kimliği. Sunucu 12090'da çalışıyor olmalı.
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:3019';
+const URL = 'http://localhost:12090';
 const results = [];
 function check(name, ok, extra = '') {
   results.push({ name, ok });

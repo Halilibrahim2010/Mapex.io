@@ -1,8 +1,8 @@
 // Sunucu soket akışının uçtan uca testi (başsız istemci).
-// Çalıştırma: node server/test/flow.test.js  (sunucu 3019'da açık olmalı)
+// Çalıştırma: node server/test/flow.test.js  (sunucu 12090'da açık olmalı)
 const { io } = require('socket.io-client');
 
-const URL = process.env.SERVER_URL || 'http://localhost:3019';
+const URL = process.env.SERVER_URL || 'http://localhost:12090';
 const results = [];
 
 function check(name, condition, detail) {
