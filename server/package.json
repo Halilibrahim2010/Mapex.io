@@ -9,13 +9,15 @@
     "test:e2e": "node test/e2e-harvest.mjs && node test/e2e-sync.mjs && node test/e2e-chat.mjs && node test/e2e-chat-clients.mjs && node test/e2e-auth.mjs",
     "test:auth": "node test/auth.test.mjs && node test/auth-http.mjs",
     "test:browser": "node test/browser-smoke.mjs && node test/browser-settings.mjs && node test/browser-chat.mjs && node test/browser-account.mjs && node test/browser-log-shadow.mjs",
-    "test:http": "node test/http-assets.mjs"
+    "test:http": "node test/http-assets.mjs",
+    "build:exe": "pkg server.js --targets node18-win-x64 --output mapex-server-v1.0.0.exe"
   },
   "dependencies": {
     "express": "^4.22.2",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "socket.io-client": "^4.7.5"
+    "socket.io-client": "^4.7.5",
+    "@yao-pkg/pkg": "^5.12.0"
   }
 }
