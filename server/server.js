@@ -48,7 +48,7 @@ io.use((socket, next) => {
 });
 
 const url = "http://127.0.0.1:12090/";
-const text = "Oyun sunucusu çalışıyor, oynamak için tıkla!";
+const text = "Oyun sunucusu çalışıyor";
 
 const CLIENT_ROOT = path.join(__dirname, "..");
 app.use(express.static(CLIENT_ROOT));
@@ -61,7 +61,7 @@ app.use("/shared", express.static(path.join(CLIENT_ROOT, "shared")));
 const prisma = tryCreatePrismaClient();
 const authLayer = createAuthLayer({
   repository: prisma ? new PrismaUserRepository(prisma) : undefined,
-  mode: prisma ? "prisma" : "memory",
+  mode: prisma ? "Harici Veritabanı" : "Dahili Bellek",
 });
 app.use("/auth", createAuthRouter(authLayer));
 // Test kancası: yalnızca MAPEX_ALLOW_TEST_HOOKS=1 iken çalışır.
@@ -83,6 +83,7 @@ const serverSettingsPath = path.join(
   "shared",
   "serverSettings.json",
 );
+
 let serverSettings = { port: 12090, corsOrigin: "*" };
 try {
   serverSettings = {

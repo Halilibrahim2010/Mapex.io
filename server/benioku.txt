@@ -1,0 +1,38 @@
+Aşağıda sunucuyu derlemek ve çalıştırılabilir dosyaya dönüştürmek için talimatlar yer alır.
+
+1) powershell aç ve mapex.io/server klasörüne git.
+
+2) launcher.cs dosyasının varlığından emin ol.
+
+3) aşağıdaki komutu doğrudan powershell terminaline yapıştır veya betik haline getirip çalıştır(betik oluşturmak daha güvenlidir.)
+
+```
+
+npx esbuild server.js --bundle --platform=node --target=node18 --outfile=dist/bundle.js --external:@prisma/client --external:.prisma
+
+if (!(Test-Path "node.exe")) {
+    Copy-Item (Get-Command node).Path -Destination node.exe -Force
+}
+
+$sharedResources = ""
+if (Test-Path "..\shared") {
+    Get-ChildItem "..\shared" -File | ForEach-Object {
+        $resName = "shared_" + $_.Name
+        $sharedResources += " /res:`"$($_.FullName)`",$resName"
+    }
+}
+
+if (Test-Path "mapex-server-v1.0.0.exe") {
+    Remove-Item "mapex-server-v1.0.0.exe" -Force
+}
+
+$csc = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+$cmd = "$csc /out:mapex-server-v1.0.0.exe /res:node.exe,node.exe /res:dist\bundle.js,bundle.js $sharedResources launcher.cs"
+
+Invoke-Expression $cmd
+
+```
+
+NOT: derlemenin çalışması için c# ve node.js araçları sisteminizde yüklü olmalıdır. ve birkere projeyi derlemeden çalıştırmanız önerilir.
+
+Bu derleme sadece sunucuyu kapsar, istemciyi çalıştırmak için çeşitli yöntemler mevcuttur.
