@@ -2,6 +2,7 @@
 // türetilir, bu yüzden yeni bir nesne eklemek için buraya dokunmak gerekmez.
 // Veri main.js'de Phaser başlamadan önce yüklenmiş olur (ensureGameData).
 import { spriteFileList, getCharacters, getInterface } from '../core/ObjectDefs.js';
+import { createCharAnims } from '../animations/CharAnims.js';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -21,7 +22,11 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.start('MainScene');
+    const characters = getCharacters();
+    for (let i = 1; i <= characters.count; i++) {
+      createCharAnims(this, `char${i}`);
+    }
+    this.scene.start('MainMenuScene');
   }
 
   // Karakter spritesheet'leri JSON'daki characters ayarından yüklenir.

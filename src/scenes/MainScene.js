@@ -96,7 +96,7 @@ export class MainScene extends Phaser.Scene {
 
     // Menü, oyun sahnesi hazır olmadan tıklandıysa bekleyen isteği şimdi uygula;
     // aksi halde sonraki tıklamayı bekle.
-    consumeStartRequest((name, char, session) => this.startGame(name, char, session));
+    consumeStartRequest((name, char, session, options) => this.startGame(name, char, session, options));
   }
 
   // Doğuş noktası mantığı world/SpawnPoint.js içinde (engel + su kontrolü).
@@ -163,11 +163,12 @@ export class MainScene extends Phaser.Scene {
 
   // Oyuncu adı ve karakteri menüden gelir; ağ bağlantısı burada kurulur.
   // session: hesap katmanından gelen oturum nesnesi (misafir/kayıtlı/çevrimdışı).
-  // Sahne bu nesnenin TÜRÜNÜ bilmez; yalnızca displayName ve economy okur.
-  startGame(name, char, session) {
+  // options: { mode, roomId, friendlyFire, isOffline }
+  startGame(name, char, session, options = {}) {
     if (this.isStarted) return;
     this.isStarted = true;
     this.session = session || null;
+    this.options = options || {};
     this.playerName = (this.session && this.session.displayName) || name || 'Oyuncu';
     const charCount = getCharacters().count;
     const charId = (char && char >= 1 && char <= charCount) ? char : 1;
@@ -181,7 +182,7 @@ export class MainScene extends Phaser.Scene {
       .setShadow(1, 1, 'rgba(0, 0, 0, 0.6)', 2)
       .setDepth(10);
 
-    this.network = new NetworkManager(this, this.playerName, charId, this.session);
+    this.network = new NetworkManager(this, this.playerName, charId, this.session, this.options);
     // Ağ senkronu için gönderilen son değerler (gereksiz paket göndermemek için).
     this.inventoryUi = new InventoryUi(this);
     this.movementSync = new MovementSync(this);

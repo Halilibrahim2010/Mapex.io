@@ -64,14 +64,14 @@ export class LocalServer {
     }
   }
 
-  // Yerel modda sunucu yok: kendi mesajımızı yalnizca kendimize yayınlarız.
   _chatSend(data) {
     if (!data || !data.text) return;
+    const sender = (this.scene && (this.scene.playerName || this.scene.name)) || 'Oyuncu';
     const entry = {
       id: this.chatLog.length + 1,
       kind: data.kind === 'private' ? 'private' : 'chat',
       fromId: null,
-      from: data.kind === 'private' ? (data.to || 'Oyuncu') : 'Oyuncu',
+      from: data.kind === 'private' ? (data.to || sender) : sender,
       to: data.kind === 'private' ? (data.to || null) : null,
       text: String(data.text).slice(0, 140),
       at: Date.now()

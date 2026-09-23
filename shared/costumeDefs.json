@@ -1,0 +1,130 @@
+{
+  "costumes": [
+    {
+      "id": 1,
+      "charKey": "char1",
+      "name": "Altın Saçlı Çocuk",
+      "category": "Maceracı",
+      "color": "#f1c40f"
+    },
+    {
+      "id": 2,
+      "charKey": "char2",
+      "name": "Yeşil Saçlı Çocuk",
+      "category": "Maceracı",
+      "color": "#2ecc71"
+    },
+    {
+      "id": 3,
+      "charKey": "char3",
+      "name": "Turuncu Saçlı Adam",
+      "category": "Maceracı",
+      "color": "#e67e22"
+    },
+    {
+      "id": 4,
+      "charKey": "char4",
+      "name": "Yeşil Saçlı Adam",
+      "category": "Maceracı",
+      "color": "#27ae60"
+    },
+    {
+      "id": 5,
+      "charKey": "char5",
+      "name": "Ninja",
+      "category": "Gölge",
+      "color": "#34495e"
+    },
+    {
+      "id": 6,
+      "charKey": "char6",
+      "name": "Pembe Saçlı Kadın",
+      "category": "Maceracı",
+      "color": "#e84393"
+    },
+    {
+      "id": 7,
+      "charKey": "char7",
+      "name": "Yeşil Başlıklı Çocuk",
+      "category": "Maceracı",
+      "color": "#1abc9c"
+    },
+    {
+      "id": 8,
+      "charKey": "char8",
+      "name": "Mavi Saçlı Adam",
+      "category": "Maceracı",
+      "color": "#3498db"
+    },
+    {
+      "id": 9,
+      "charKey": "char9",
+      "name": "Korsan",
+      "category": "Denizci",
+      "color": "#c0392b"
+    },
+    {
+      "id": 10,
+      "charKey": "char10",
+      "name": "Romalı Savaşçı",
+      "category": "Savaşçı",
+      "color": "#d35400"
+    },
+    {
+      "id": 11,
+      "charKey": "char11",
+      "name": "Zırhlı Savaşçı",
+      "category": "Savaşçı",
+      "color": "#95a5a6"
+    },
+    {
+      "id": 12,
+      "charKey": "char12",
+      "name": "Gladyatör",
+      "category": "Savaşçı",
+      "color": "#b71540"
+    },
+    {
+      "id": 13,
+      "charKey": "char13",
+      "name": "Zırhlı Ninja",
+      "category": "Gölge",
+      "color": "#2c3e50"
+    },
+    {
+      "id": 14,
+      "charKey": "char14",
+      "name": "Zırhlı Savaşçı 2",
+      "category": "Savaşçı",
+      "color": "#7f8c8d"
+    },
+    {
+      "id": 15,
+      "charKey": "char15",
+      "name": "Ateş Canavarı",
+      "category": "Yaratık",
+      "color": "#e17055"
+    },
+    {
+      "id": 16,
+      "charKey": "char16",
+      "name": "Mor Canavar",
+      "category": "Yaratık",
+      "color": "#6c5ce7"
+    },
+    {
+      "id": 17,
+      "charKey": "char17",
+      "name": "Kırmızı Beyin",
+      "category": "Yaratık",
+      "color": "#d63031"
+    },
+    {
+      "id": 18,
+      "charKey": "char18",
+      "name": "Böcek",
+      "category": "Yaratık",
+      "color": "#00b894"
+    }
+  ]
+}

@@ -1,15 +1,19 @@
-import { PreloadScene } from "./scenes/PreloadScene.js";
-import { MainScene } from "./scenes/MainScene.js";
-import { initMenu } from "./ui/Menu.js";
-import { ensureGameData } from "./core/ObjectDefs.js";
-import { initAccount } from "./account/index.js";
-import "./core/StartRequest.js";
+import { PreloadScene } from './scenes/PreloadScene.js';
+import { MainMenuScene } from './scenes/MainMenuScene.js';
+import { CostumeSelectScene } from './scenes/CostumeSelectScene.js';
+import { MainScene } from './scenes/MainScene.js';
+import { initMenu } from './ui/Menu.js';
+import { ensureGameData } from './core/ObjectDefs.js';
+import { ensureCostumeData } from './core/CostumeDefs.js';
+import { initAccount } from './account/index.js';
+import './core/StartRequest.js';
 
 // Oyun verisi (shared/objectDefs.json) Phaser başlamadan önce yüklenir; böylece
 // PreloadScene dosya listesini tek turda, senkron olarak kurabilir.
 async function boot() {
   try {
     await ensureGameData();
+    await ensureCostumeData();
   } catch (error) {
     console.error("Oyun verisi yüklenemedi:", error);
     const overlay = document.getElementById("menu-overlay");
@@ -89,6 +93,7 @@ async function boot() {
       verticalPixels: fov.verticalPixels,
       horizontalPixels: fov.horizontalPixels,
     },
+    scene: [PreloadScene, MainMenuScene, CostumeSelectScene, MainScene]
   };
 
   const game = new Phaser.Game(config);

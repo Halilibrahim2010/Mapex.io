@@ -15,36 +15,57 @@ function setMessage(el, text, kind = '') {
 // Oturum şeridini günceller: isim, kaynak etiketi ve bakiye.
 export function renderSessionBar(session) {
   const bar = document.getElementById('session-bar');
+  const authBtn = document.getElementById('btn-open-auth');
   if (!bar) return;
-  bar.classList.add('visible');
+
+  const isAccount = session && session.isAccount;
+
+  if (isAccount) {
+    bar.style.display = 'flex';
+    if (authBtn) authBtn.style.display = 'none';
+  } else {
+    bar.style.display = 'none';
+    if (authBtn) authBtn.style.display = 'flex';
+  }
 
   const name = document.getElementById('session-name');
   const badge = document.getElementById('session-badge');
   const gold = document.getElementById('session-gold');
   const gems = document.getElementById('session-gems');
-  const level = document.getElementById('session-level');
 
   const economy = (session && session.economy) || {};
   if (name) name.textContent = (session && session.displayName) || 'Oyuncu';
   if (badge) {
-    // Etiket yalnızca bilgilendiricidir; oyun kararları buna bakmaz.
-    const label = session && session.isAccount ? 'KAYITLI' : (session && session.isOffline ? 'ÇEVRİMDIŞI' : 'MİSAFİR');
+    const label = isAccount ? 'KAYITLI' : 'MİSAFİR';
     badge.textContent = label;
-    badge.className = 'session-badge' + (session && session.isAccount ? ' account' : '');
+    badge.className = 'session-badge' + (isAccount ? ' account' : '');
   }
   if (gold) gold.textContent = `🪙 ${Number(economy.gold || 0)}`;
   if (gems) gems.textContent = `💎 ${Number(economy.gems || 0)}`;
-  if (level) level.textContent = `★ ${Number(economy.level || 1)}`;
 }
 
-// Kayıt/giriş formunu bağlar. Kayıtlı oyuncu adı hatırlanır ve isim alanına
-// önceden yazılır (kullanıcı her seferinde yazmasın).
+// Kayıt/giriş formunu bağlar.
 export function initAccountPanel({ onChange } = {}) {
   const message = document.getElementById('account-message');
-  const nameInput = document.getElementById('name-input');
+  const modal = document.getElementById('account-modal');
+  const openBtn = document.getElementById('btn-open-auth');
+  const closeBtn = document.getElementById('btn-close-auth-modal');
 
-  const remembered = rememberedName();
-  if (remembered && nameInput && !nameInput.value) nameInput.value = remembered;
+  function openModal() {
+    if (modal) modal.style.display = 'flex';
+    setMessage(message, '');
+  }
+
+  function closeModal() {
+    if (modal) modal.style.display = 'none';
+  }
+
+  openBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
 
   // --- Sekme geçişi -------------------------------------------------------
   const tabs = document.querySelectorAll('.account-tab');
@@ -59,7 +80,7 @@ export function initAccountPanel({ onChange } = {}) {
     });
   }
 
-  // Açılışta mevcut oturumu şeritte göster (kayıtlıysa KAYITLI, değilse MİSAFİR).
+  // Açılışta mevcut oturumu şeritte göster
   renderSessionBar(getSession());
 
   // --- Giriş --------------------------------------------------------------
@@ -77,10 +98,10 @@ export function initAccountPanel({ onChange } = {}) {
     loginSubmit.disabled = false;
 
     if (!result.ok) return setMessage(message, result.error || 'Giriş başarısız.', 'error');
-    const session = await adoptLogin(result, nameInput?.value || 'Oyuncu');
-    if (nameInput) nameInput.value = session.displayName;
+    const session = await adoptLogin(result, 'Oyuncu');
     setMessage(message, `Hoş geldin, ${session.displayName}!`, 'ok');
     renderSessionBar(session);
+    setTimeout(closeModal, 800);
     if (onChange) onChange(session);
   });
 
@@ -105,9 +126,9 @@ export function initAccountPanel({ onChange } = {}) {
 
     if (!result.ok) return setMessage(message, result.error || 'Kayıt başarısız.', 'error');
     const session = await adoptLogin(result, nameCheck.value);
-    if (nameInput) nameInput.value = session.displayName;
     setMessage(message, 'Hesap oluşturuldu. İyi oyunlar!', 'ok');
     renderSessionBar(session);
+    setTimeout(closeModal, 800);
     if (onChange) onChange(session);
   });
 
@@ -115,19 +136,15 @@ export function initAccountPanel({ onChange } = {}) {
   const signout = document.getElementById('account-signout');
   signout?.addEventListener('click', async () => {
     const session = await signOut();
-    setMessage(message, 'Çıkış yapıldı. Misafir olarak devam ediyorsun.', 'ok');
     renderSessionBar(session);
     if (onChange) onChange(session);
   });
 
   // --- Misafir olarak devam ----------------------------------------------
-  // Hesap sisteminin oyunu bloke ETMEDİĞİNİN somut kanıtı: bu düğme her zaman
-  // oyunu başlatır ve oturum misafire düşer.
   const guestContinue = document.getElementById('guest-continue');
   guestContinue?.addEventListener('click', () => {
-    const submit = document.getElementById('name-submit');
-    if (submit) submit.click();
+    closeModal();
   });
 
-  return { setMessage };
+  return { setMessage, renderSessionBar };
 }

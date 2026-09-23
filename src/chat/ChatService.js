@@ -53,10 +53,11 @@ export class ChatService {
 
   onIncoming(message) {
     if (!message || !message.text) return;
-    // Ozel mesaj bize degilse veya kendi gonderdigimiz yankıysa yok sayilir.
+    // Kendi gönderdiğimiz mesajların sunucu yankılarını yok say (çift mesajı engelle)
+    if (this.isMe(message.from)) return;
+
     if (message.kind === CHAT_KIND.PRIVATE) {
       if (!this.isForMe(message.to)) return;
-      if (this.isMe(message.from)) return;
     }
     this.model.applyIncoming(message);
     if (this.scene.chatBox) this.scene.chatBox.markDirty();

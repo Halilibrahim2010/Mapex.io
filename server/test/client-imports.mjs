@@ -29,9 +29,11 @@ global.location = { hostname: 'localhost', protocol: 'http:', port: '12090', hre
 
 const modules = [
   'src/core/ObjectDefs.js',
+  'src/core/CostumeDefs.js',
   'src/core/Inventory.js',
   'src/core/WorldGenerator.js',
   'src/core/StartRequest.js',
+  'src/systems/MenuBackground.js',
   'src/chat/ChatTypes.js',
   'src/chat/ChatModel.js',
   'src/chat/ChatService.js',
@@ -39,7 +41,11 @@ const modules = [
   'src/account/AuthApi.js',
   'src/account/SessionProvider.js',
   'src/ui/AccountRules.js',
+  'src/ui/MultiplayerPanel.js',
+  'src/ui/LobbyPanel.js',
   'src/scenes/PreloadScene.js',
+  'src/scenes/MainMenuScene.js',
+  'src/scenes/CostumeSelectScene.js',
   'src/scenes/MainScene.js'
 ];
 

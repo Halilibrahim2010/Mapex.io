@@ -1,18 +1,19 @@
-const express = require("express");
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const { Server } = require("socket.io");
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const { Server } = require('socket.io');
 
-const { GameWorld } = require("./game/GameWorld");
-const { GameClock, PlayerRegistry } = require("./game/GameClock");
-const { InventoryStore } = require("./game/InventoryStore");
-const { attachSocketHandlers } = require("./game/SocketHandlers");
-const { createAuthLayer, tryCreatePrismaClient } = require("./auth");
-const { PrismaUserRepository } = require("./auth/PrismaUserRepository");
-const { createAuthRouter, limiterResetRoute } = require("./auth/routes");
+const { GameWorld } = require('./game/GameWorld');
+const { GameClock, PlayerRegistry } = require('./game/GameClock');
+const { InventoryStore } = require('./game/InventoryStore');
+const { RoomManager } = require('./game/RoomManager');
+const { attachSocketHandlers } = require('./game/SocketHandlers');
+const { createAuthLayer, tryCreatePrismaClient } = require('./auth');
+const { PrismaUserRepository } = require('./auth/PrismaUserRepository');
+const { createAuthRouter, limiterResetRoute } = require('./auth/routes');
 
 const app = express();
+app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
@@ -72,9 +73,29 @@ const world = new GameWorld();
 const store = new InventoryStore(world);
 const players = new PlayerRegistry();
 const clock = new GameClock(io);
+const roomManager = new RoomManager(io);
+
+// Lobby API Uç Noktaları
+app.post('/lobby/create', async (req, res) => {
+  try {
+    const result = await roomManager.createLobby(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, message: err.message });
+  }
+});
+
+app.post('/lobby/join', async (req, res) => {
+  try {
+    const result = await roomManager.joinLobby(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, message: err.message });
+  }
+});
 
 clock.start();
-attachSocketHandlers(io, world, store, clock, players, authLayer);
+attachSocketHandlers(io, world, store, clock, players, authLayer, roomManager);
 
 // Sunucu ayarları shared/serverSettings.json'dan okunur (yeni port: 12090).
 const serverSettingsPath = path.join(

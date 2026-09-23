@@ -11,7 +11,7 @@ const SERVER_URL =
   (window.__MAPEX_SERVER_PORT || 12090);
 
 export class NetworkManager {
-  constructor(scene, name = "Oyuncu", char = 1, session = null) {
+  constructor(scene, name = 'Oyuncu', char = 1, session = null, options = {}) {
     this.scene = scene;
     this.name = name;
     this.char = char || 1;
@@ -19,52 +19,19 @@ export class NetworkManager {
     // Yalnızca iki bilgiyi kullanır: jeton (kimlik) ve displayName (etiket).
     this.session = session;
     this.sessionToken = session && session.token ? session.token : null;
+    this.options = options || {};
+    this.roomId = this.options.roomId || 'public_ff_off';
+    this.isOffline = Boolean(this.options.isOffline || this.options.mode === 'singleplayer');
     this.remotePlayers = new Map();
-    // Sunucu yoksa yerel mod aynı olayları üretir; oyun tek kişilik devam eder.
+    // Sunucu yoksa veya tek kişilik mod ise yerel sunucu çalışır
     this.socket = this._connect();
     this._bindEvents();
   }
 
   _connect() {
-    if (typeof io !== "function") return new LocalServer(this.scene);
-
-    // Socket.IO bağlanırken 'auth' objesi içinde sürümü fırlatıyoruz:
-    const socket = io(SERVER_URL, {
-      reconnectionAttempts: 1,
-      timeout: 2500,
-      auth: {
-        version: CLIENT_VERSION,
-      },
-    });
-
-    socket.on("connect_error", (err) => {
-      // 🔴 SÜRÜM UYUMSUZLUĞU YAKALANDI
-      if (err && err.message === "VERSION_MISMATCH") {
-        console.error("[network] Sürüm Uyuşmazlığı:", err.data);
-
-        // Yeniden bağlanma denemelerini sıfırla ki durmadan darlamasın
-        if (socket.io) socket.io.reconnectionAttempts(0);
-        socket.disconnect();
-
-        // Kullanıcıya ekran overlay'i ile uyarı bas
-        const overlay = document.getElementById("menu-overlay");
-        if (overlay) {
-          const minVer = err.data?.min || "1.0.0";
-          overlay.style.display = "flex";
-          overlay.innerHTML = `
-            <div class="menu-card" style="text-align: center;">
-              <h1 class="menu-title" style="color: #ff4757;">Güncelleme Gerekli</h1>
-              <p class="menu-sub">Oyununuzun sürümü eskimiş veya uyumsuz.</p>
-              <p style="font-size: 14px; color: #aaa; margin-top: 10px;">
-                Mevcut: <b>${CLIENT_VERSION}</b> | Gereken: <b>${minVer}</b>
-              </p>
-              <p style="font-size: 12px; color: #888; margin-top: 15px;">Lütfen oyunun son sürümünü indirip tekrar girin.</p>
-            </div>`;
-        }
-        return; // Sürüm hatası varsa LocalServer'a düşmesin, oyunu kilitlesin!
-      }
-
-      // Genel bağlantı kopmaları / sunucu kapalılığı için eski mantık (LocalServer):
+    if (this.isOffline || typeof io !== 'function') return new LocalServer(this.scene);
+    const socket = io(SERVER_URL, { reconnectionAttempts: 1, timeout: 2500 });
+    socket.on('connect_error', () => {
       if (socket.io) socket.io.reconnectionAttempts(0);
       this._useLocalServer();
     });
@@ -78,7 +45,7 @@ export class NetworkManager {
     this.socket.disconnect();
     this.socket = new LocalServer(this.scene);
     this._bindEvents();
-    this.emit("hello", { name: this.name, char: this.char });
+    this.emit('hello', { name: this.name, char: this.char, roomId: this.roomId });
   }
 
   on(event, callback) {
@@ -101,10 +68,11 @@ export class NetworkManager {
     this.on("connect", () => {
       // sessionToken: kayıtlı oyuncunun oturumu sunucuda çözülür. Jeton yoksa
       // sunucu misafir oturumu atar; yani bu alan opsiyoneldir.
-      this.emit("hello", {
+      this.emit('hello', {
         name: this.name,
         char: this.char,
         sessionToken: this.sessionToken,
+        roomId: this.roomId
       });
     });
 
