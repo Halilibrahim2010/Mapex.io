@@ -4,8 +4,8 @@ export const NIGHT_MAX_ALPHA = 0.975; // gece neredeyse kapkara: fenerler gerçe
 export const DAY_LENGTH_MS = 15 * 60 * 1000; // one full in-game day = 15 real minutes
 export const START_HOUR = 10;
 export const TIME_SKIP_FACTOR = 40;   // Shift basılıyken zaman kaç kat hızlı akar
-export const LIGHT_RADIUS = 38;       // oyuncunun kendi ışığı: dar ve gerçekçi bir çekirdek
-export const LIGHT_FALLOFF = 1.8;     // yumuşak geçişin çekirdeğe oranı
+export const LIGHT_RADIUS = 28;       // oyuncunun kendi ışığı: fenerle aynı aileden küçük çekirdek
+export const LIGHT_FALLOFF = 2.0;     // dış yarıçap 56px (fener 160px); fenerin anlamı kalsın diye küçük tutuldu
 // Fener ışığının sıcak turuncu parıltısı (karanlık delmenin üstüne eklenir).
 export const LAMP_GLOW_COLOR = 'rgba(255, 170, 80, 0.14)';
 
@@ -146,14 +146,27 @@ export class DayNightCycle {
       const R_OUTER = R * LIGHT_FALLOFF;
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'destination-out';
-      const grad = ctx.createRadialGradient(sx, sy, R, sx, sy, R_OUTER);
-      grad.addColorStop(0, 'rgba(0,0,0,1)');
+      // Fenerle aynı çizim ailesi: iç yarıçap çok küçük (R*0.15), duraklar
+      // fenerin delme gradientiyle aynı oranda. Böylece oyuncu fenerin
+      // içine girince iki ışığın sınırı sert halka gibi görünmez.
+      const grad = ctx.createRadialGradient(sx, sy, R * 0.15, sx, sy, R_OUTER);
+      grad.addColorStop(0, 'rgba(0,0,0,0.9)');
+      grad.addColorStop(0.55, 'rgba(0,0,0,0.5)');
       grad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(sx, sy, R_OUTER, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
+      // Delik açıldıktan sonra hafif sıcak parıltı: fenerin tonu, çok daha
+      // zayıf; küçük ışık büyük ışığın içine pürüzsüz erisin diye.
+      const glow = ctx.createRadialGradient(sx, sy, 2, sx, sy, R_OUTER * 0.7);
+      glow.addColorStop(0, 'rgba(255,170,80,0.06)');
+      glow.addColorStop(1, 'rgba(255,170,80,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(sx, sy, R_OUTER * 0.7, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Fenerler: karanlığı belirgin biçimde delen güçlü bir ışık +
