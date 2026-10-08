@@ -168,7 +168,7 @@ export class MainScene extends Phaser.Scene {
     if (this.isStarted) return;
     this.isStarted = true;
     this.session = session || null;
-    this.playerName = (this.session && this.session.displayName) || name || 'Oyuncu';
+    this.playerName = (name && String(name).trim()) || (this.session && this.session.displayName) || 'Oyuncu';
     const charCount = getCharacters().count;
     const charId = (char && char >= 1 && char <= charCount) ? char : 1;
     this.player.setCharacter(`char${charId}`);
