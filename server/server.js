@@ -17,8 +17,8 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 // MIN ve MAX sürüm limitlerin
-const MIN_VERSION = "1.0.0";
-const MAX_VERSION = "1.0.0";
+const MIN_VERSION = "1.0.1";
+const MAX_VERSION = "1.0.1";
 
 // Semver mantığı veya basit string/float kıyaslaması için yardımcı fonksiyon
 function isVersionAllowed(v) {
