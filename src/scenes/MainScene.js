@@ -94,6 +94,14 @@ export class MainScene extends Phaser.Scene {
     this.ground.update(0, 0);
     this.layer.update(0, 0);
 
+    this.scale.on('resize', (gameSize) => {
+      const w = gameSize.width;
+      const h = gameSize.height;
+      if (this.dayNight) this.dayNight.refreshSize(w, h);
+      if (this.inventoryView) this.inventoryView.layoutHotbar(w, h);
+      if (this._layoutChatUi) this._layoutChatUi();
+    });
+
     // Menü, oyun sahnesi hazır olmadan tıklandıysa bekleyen isteği şimdi uygula;
     // aksi halde sonraki tıklamayı bekle.
     consumeStartRequest((name, char, session) => this.startGame(name, char, session));

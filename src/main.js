@@ -73,7 +73,6 @@ async function boot() {
       // iç çözünürlük otomatik küçülür (ör. 1920/3 = 640, 1080/3 = 360).
       // F11 / pencere boyutu değişimlerinde ezilme olmaz.
       mode: Phaser.Scale.RESIZE,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: [PreloadScene, MainScene],
   };

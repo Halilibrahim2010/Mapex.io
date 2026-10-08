@@ -75,13 +75,13 @@ export class DayNightCycle {
   }
 
   // Keep the overlay covering the screen on resize.
-  refreshSize() {
+  refreshSize(width, height) {
     if (!this.overlay) return;
-    const w = this.scene.scale.width;
-    const h = this.scene.scale.height;
+    const w = width !== undefined ? width : this.scene.scale.width;
+    const h = height !== undefined ? height : this.scene.scale.height;
     this._createNightCanvas(w, h);
     this.overlay.setTexture('night_canvas');
-    this.clockText.setPosition(w - 12, 12);
+    if (this.clockText) this.clockText.setPosition(w - 12, 12);
   }
 
   // 0 = full day, 1 = full night.
