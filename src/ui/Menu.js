@@ -70,6 +70,7 @@ export async function initMenu() {
   }
 
   submitBtn?.addEventListener('click', startGame);
+  document.getElementById('multiplayer-submit')?.addEventListener('click', startGame);
   input?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') startGame();
   });

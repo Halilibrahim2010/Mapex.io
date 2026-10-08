@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Mapex io</title>
+  <title>Mapex.io</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="phaser.min.js"></script>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -14,76 +14,105 @@
 
   <div id="menu-overlay">
     <div class="menu-card">
-      <h1 class="menu-title">mapex.io</h1>
-      <p class="menu-sub">KARAKTERİNİ SEÇ • ADINI GİR • DÜNYAYA ADIM AT</p>
+      <header class="menu-header">
+        <h1 class="menu-title">MAPEX.IO</h1>
+        <p class="menu-sub">KESFET • TOPLA • KENDI DÜNYANI KUR</p>
+      </header>
 
-      <div class="char-section">
-        <div class="char-preview">
-          <div id="char-big" class="char-sprite-big"></div>
-          <div id="char-name" class="char-preview-name">Savaşçı 1</div>
-        </div>
-        <div class="char-grid" id="char-grid"></div>
-      </div>
-
-      <div class="menu-actions">
-        <input type="text" id="name-input" maxlength="16" placeholder="Kullanıcı adın..." />
-        <button id="name-submit">OYUNA GİR</button>
-      </div>
-
-      <!-- HESAP PANELİ: oyundan tamamen bağımsız bir kabuk. Panel boş/kapalı
-           olsa da oyun misafir olarak başlar; hesap sistemi opsiyoneldir. -->
       <div class="session-bar" id="session-bar">
         <div class="session-info">
           <span id="session-name">Oyuncu</span>
-          <span class="session-badge" id="session-badge">MİSAFİR</span>
+          <span class="session-badge" id="session-badge">Misafir</span>
         </div>
         <div class="session-economy">
           <span id="session-gold">🪙 0</span>
           <span id="session-gems">💎 0</span>
           <span id="session-level">★ 1</span>
         </div>
-        <button id="account-signout">ÇIKIŞ</button>
+        <button id="account-signout" type="button">ÇIKIŞ</button>
       </div>
 
-      <div class="account-tabs">
-        <button class="account-tab active" id="tab-login" data-panel="login">GİRİŞ YAP</button>
-        <button class="account-tab" id="tab-register" data-panel="register">KAYIT OL</button>
-      </div>
+      <main class="menu-center">
+        <h2>Nasıl bir maceraya çıkacaksın?</h2>
+        <input type="text" id="name-input" maxlength="16" placeholder="Oyuncu adını yaz..." autocomplete="nickname">
 
-      <div class="account-panel active" id="panel-login">
-        <div class="account-field">
-          <label for="login-email">E-posta</label>
-          <input type="email" id="login-email" autocomplete="email" placeholder="ornek@eposta.com" />
-        </div>
-        <div class="account-field">
-          <label for="login-password">Şifre</label>
-          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" />
-        </div>
-        <button class="account-submit" id="login-submit">GİRİŞ YAP</button>
-      </div>
-
-      <div class="account-panel" id="panel-register">
-        <div id="register-row">
-          <div class="account-field">
-            <label for="register-username">Kullanıcı adı</label>
-            <input type="text" id="register-username" maxlength="15" autocomplete="username" placeholder="3-15 karakter" />
-          </div>
-          <div class="account-field">
-            <label for="register-email">E-posta</label>
-            <input type="email" id="register-email" autocomplete="email" placeholder="ornek@eposta.com" />
+        <div class="mode-select">
+          <button class="mode-button primary" id="name-submit" type="button">
+            <strong>Tek oyunculu</strong>
+            <small>Kendi dünyanı keşfet</small>
+          </button>
+          <div class="multiplayer-choice">
+            <button class="mode-button" id="multiplayer-submit" type="button">
+              <strong>Çok oyunculu</strong>
+              <small>Arkadaşlarınla oyna</small>
+            </button>
+            <input class="server-input" id="server-address" type="text" value="127.0.0.1:12090" aria-label="Varsayılan sunucu">
           </div>
         </div>
-        <div class="account-field">
-          <label for="register-password">Şifre</label>
-          <input type="password" id="register-password" autocomplete="new-password" placeholder="En az 8 karakter" />
+        <p class="menu-hint">Hesap oluşturarak gelişimini koruyabilirsin! (bağlı olunan sunucu içindir.)</p>
+      </main>
+
+      <details class="corner-menu character-menu">
+        <summary>Karakter seçimi <span aria-hidden="true">✦</span></summary>
+        <div class="char-section">
+          <div class="char-preview">
+            <div id="char-big" class="char-sprite-big"></div>
+            <div id="char-name" class="char-preview-name">Altın Saçlı Çocuk</div>
+          </div>
+          <div class="char-grid" id="char-grid"></div>
         </div>
-        <button class="account-submit" id="register-submit">KAYIT OL</button>
-        <button class="account-submit ghost" id="guest-continue">MİSAFİR OLARAK DEVAM ET</button>
+      </details>
+
+      <div class="corner-menu utility-menu">
+        <details>
+          <summary>Hesap ayarları</summary>
+          <div class="utility-panel">
+            <div class="account-tabs">
+              <button class="account-tab active" id="tab-login" data-panel="login" type="button">GİRİŞ YAP</button>
+              <button class="account-tab" id="tab-register" data-panel="register" type="button">KAYIT OL</button>
+            </div>
+
+            <div class="account-panel active" id="panel-login">
+              <div class="account-field">
+                <label for="login-email">E-posta</label>
+                <input type="email" id="login-email" autocomplete="email" placeholder="ornek@eposta.com">
+              </div>
+              <div class="account-field">
+                <label for="login-password">Şifre</label>
+                <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••">
+              </div>
+              <button class="account-submit" id="login-submit" type="button">GİRİŞ YAP</button>
+            </div>
+
+            <div class="account-panel" id="panel-register">
+              <div id="register-row">
+                <div class="account-field">
+                  <label for="register-username">Kullanıcı adı</label>
+                  <input type="text" id="register-username" maxlength="15" autocomplete="username" placeholder="3-15 karakter">
+                </div>
+                <div class="account-field">
+                  <label for="register-email">E-posta</label>
+                  <input type="email" id="register-email" autocomplete="email" placeholder="ornek@eposta.com">
+                </div>
+              </div>
+              <div class="account-field">
+                <label for="register-password">Şifre</label>
+                <input type="password" id="register-password" autocomplete="new-password" placeholder="En az 8 karakter">
+              </div>
+              <button class="account-submit" id="register-submit" type="button">KAYIT OL</button>
+              <button class="account-submit ghost" id="guest-continue" type="button">MİSAFİR OLARAK DEVAM ET</button>
+            </div>
+            <p class="account-message" id="account-message"></p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Ayarlar</summary>
+          <div class="utility-panel">
+            <p class="settings-empty">Oyun ayarları şimdilik oyun içindeki menüde bulunuyor.</p>
+          </div>
+        </details>
       </div>
-
-      <p class="account-message" id="account-message"></p>
-
-      <p class="menu-hint">WASD / Ok tuşları: hareket • Basılı sol tık: ağaç kes • I: envanter • ESC: menü</p>
     </div>
   </div>
 

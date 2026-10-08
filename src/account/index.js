@@ -9,14 +9,20 @@
 // Oyun çekirdeği (MainScene, Hud, Player) bu dosyanın ötesine bakmaz; hesap
 // sistemi kaldırılsa yalnızca initAccount her zaman misafir döner ve oyun
 // davranışı değişmez.
-import { SessionProvider, createDefaultProvider } from './SessionProvider.js';
-import { pendingSession } from './ClientSession.js';
-import { AuthApi, getToken, setToken, rememberName, rememberedName } from './AuthApi.js';
+import { SessionProvider, createDefaultProvider } from "./SessionProvider.js";
+import { pendingSession } from "./ClientSession.js";
+import {
+  AuthApi,
+  getToken,
+  setToken,
+  rememberName,
+  rememberedName,
+} from "./AuthApi.js";
 
 let provider = null;
 let session = null;
 
-export async function initAccount(name = 'Oyuncu') {
+export async function initAccount(name = "Oyuncu") {
   if (session) return session;
   provider = createDefaultProvider(name);
   session = await provider.resolve({ displayName: name });
@@ -44,7 +50,9 @@ export async function adoptLogin(result, name) {
   setToken(result.token);
   rememberName(result.user && result.user.username);
   if (!provider) provider = createDefaultProvider(name);
-  return provider.resolve({ displayName: (result.user && result.user.username) || name });
+  return provider.resolve({
+    displayName: (result.user && result.user.username) || name,
+  });
 }
 
 // Çıkış: sunucudaki jeton iptal edilir, yerelde temizlenir, misafire dönülür.
@@ -56,5 +64,5 @@ export async function signOut() {
 }
 
 export { AuthApi, getToken, setToken, rememberName, rememberedName };
-export { pendingSession } from './ClientSession.js';
-export { OfflineSession } from './OfflineSession.js';
+export { pendingSession } from "./ClientSession.js";
+export { OfflineSession } from "./OfflineSession.js";
