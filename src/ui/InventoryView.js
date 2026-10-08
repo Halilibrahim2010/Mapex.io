@@ -33,6 +33,12 @@ export class InventoryView {
     this.selectedIndex = null;
     this.dropBuffer = '';
     this._hoverText = null;
+    this._byIndex = new Map();
+    this._dragSourceIndex = null;
+    this._dragItem = null;
+    this._ghostIcon = null;
+    this._onPointerMove = null;
+    this._onPointerUp = null;
     ensureIconPlaceholder(scene);
   }
 
@@ -57,7 +63,7 @@ export class InventoryView {
 
   _createHoverText(depth) {
     if (this._hoverText && this._hoverText.active) return this._hoverText;
-        this._hoverText = this.scene.add.text(0, 0, '', {
+    this._hoverText = this.scene.add.text(0, 0, '', {
       fontFamily: 'Monocraft', fontSize: '13px', color: '#ffe9b0',
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5).setDepth(depth).setScrollFactor(0).setVisible(false);
@@ -98,38 +104,40 @@ export class InventoryView {
       group.add(countText);
       bg.on('pointerover', () => bg.setTint(0x9fe8a8));
       bg.on('pointerout', () => bg.clearTint());
-      slots.push({ icon, countText, bg });
+      slots.push({ bg, icon, countText });
     }
 
     group.add(this._createHoverText(depth + 1));
     this.hotbar = { group, slots, startX, startY, slot, gap };
 
-    // Pencere boyutu değiştiğinde (F11 vb.) hotbar'ı yeniden konumlandır.
-    this.scene.scale.on('resize', this._repositionHotbar, this);
-
     return this.hotbar;
   }
 
   // Hotbar elemanlarını güncel ekran boyutuna göre yeniden konumlandırır.
-  _repositionHotbar() {
+  layoutHotbar(width, height) {
     if (!this.hotbar) return;
-    const cam = this.scene.cameras.main;
+    const w = width !== undefined ? width : (this.scene.scale ? this.scene.scale.width : this.scene.cameras.main.width);
+    const h = height !== undefined ? height : (this.scene.scale ? this.scene.scale.height : this.scene.cameras.main.height);
     const columns = this._hotbarColumns || 5;
     const { slots, slot, gap } = this.hotbar;
     const totalWidth = columns * slot + (columns - 1) * gap;
-    const newStartX = cam.width / 2 - totalWidth / 2 + slot / 2;
-    const newStartY = cam.height - 48;
+    const startX = w / 2 - totalWidth / 2 + slot / 2;
+    const startY = h - 48;
 
-    this.hotbar.startX = newStartX;
-    this.hotbar.startY = newStartY;
+    this.hotbar.startX = startX;
+    this.hotbar.startY = startY;
 
     for (let i = 0; i < slots.length; i++) {
-      const x = newStartX + i * (slot + gap);
+      const x = startX + i * (slot + gap);
       const s = slots[i];
-      if (s.bg) s.bg.setPosition(x, newStartY);
-      s.icon.setPosition(x, newStartY - 4);
-      s.countText.setPosition(x + slot / 2 - 4, newStartY + slot / 2 - 6);
+      if (s.bg) s.bg.setPosition(x, startY);
+      if (s.icon) s.icon.setPosition(x, startY - 4);
+      if (s.countText) s.countText.setPosition(x + slot / 2 - 4, startY + slot / 2 - 6);
     }
+  }
+
+  _repositionHotbar() {
+    this.layoutHotbar();
   }
 
   // İkonu slota sığacak şekilde ölçekler (pixel art oranı korunur).
@@ -178,6 +186,7 @@ export class InventoryView {
     const ph = Math.min(440, cam.height - 40);
     const px = cam.width / 2;
     const py = cam.height / 2;
+    const panelBounds = { x: px - pw / 2, y: py - ph / 2, w: pw, h: ph };
 
     group.add(this.scene.add.rectangle(px, py, cam.width, cam.height, 0x000000, 0.55)
       .setDepth(d).setScrollFactor(0).setInteractive());
@@ -193,6 +202,8 @@ export class InventoryView {
       .setDepth(d).setScrollFactor(0));
 
     const grid = { cols: 5, rows: 3, slot: 64, gap: 14 };
+    const maxSlots = this.scene.inventory ? this.scene.inventory.maxSlots : 15;
+    const totalSlots = Math.min(grid.cols * grid.rows, maxSlots);
     const gridW = grid.cols * grid.slot + (grid.cols - 1) * grid.gap;
     const gridH = grid.rows * grid.slot + (grid.rows - 1) * grid.gap;
     const gx0 = px - gridW / 2 + grid.slot / 2;
@@ -202,13 +213,29 @@ export class InventoryView {
     for (let r = 0; r < grid.rows; r++) {
       for (let c = 0; c < grid.cols; c++) {
         const index = r * grid.cols + c;
+        if (index >= totalSlots) break;
         const x = gx0 + c * (grid.slot + grid.gap);
         const y = gy0 + r * (grid.slot + grid.gap);
         cells.push(this._createCell(group, index, x, y + 20, grid.slot, d));
       }
     }
 
-    this.window = { group, cells, items: [] };
+    this.window = { group, cells, items: [], panelBounds, slotSize: grid.slot };
+
+    // Sürükleme için fare olaylarını bağla
+    this._onPointerMove = (pointer) => {
+      if (this._ghostIcon) {
+        this._ghostIcon.setPosition(pointer.x, pointer.y);
+      }
+    };
+    this._onPointerUp = (pointer) => {
+      if (this._dragSourceIndex !== null && this._dragSourceIndex !== undefined) {
+        this._endDrag(pointer);
+      }
+    };
+    this.scene.input.on('pointermove', this._onPointerMove);
+    this.scene.input.on('pointerup', this._onPointerUp);
+
     this.refresh(items);
   }
 
@@ -230,8 +257,89 @@ export class InventoryView {
     }).setOrigin(0.5, 0).setDepth(d).setScrollFactor(0).setVisible(false);
     group.add(label);
 
-    bg.on('pointerdown', () => this.select(index, bg));
+    bg.on('pointerdown', (pointer) => {
+      this.select(index, bg);
+      this._startDrag(index, pointer);
+    });
     return { bg, icon, countText, label };
+  }
+
+  _startDrag(index, pointer) {
+    const entry = this._entryAt(index);
+    if (!entry || !entry.slot) return;
+    this._dragSourceIndex = index;
+    this._dragItem = { itemId: entry.slot.itemId, count: entry.slot.count };
+    const iconKey = this.iconOf(entry.slot.itemId);
+    if (this._ghostIcon) this._ghostIcon.destroy();
+    this._ghostIcon = this.scene.add.image(pointer.x, pointer.y, iconKey || ICON_PLACEHOLDER)
+      .setScale(1.5)
+      .setDepth(UI_DEPTH + 10)
+      .setAlpha(0.85)
+      .setScrollFactor(0);
+    this._fitIcon(this._ghostIcon, 44);
+    this.scene.input.setDefaultCursor('grabbing');
+  }
+
+  _cancelDrag() {
+    if (this._ghostIcon) {
+      this._ghostIcon.destroy();
+      this._ghostIcon = null;
+    }
+    this._dragSourceIndex = null;
+    this._dragItem = null;
+    this.scene.input.setDefaultCursor('url(assets/cross.png) 25 25, default');
+  }
+
+  _endDrag(pointer) {
+    if (this._dragSourceIndex === null || this._dragSourceIndex === undefined || !this._dragItem) {
+      this._cancelDrag();
+      return;
+    }
+
+    const bounds = this.window && this.window.panelBounds;
+    // a) pointer panelBounds DIŞINDAYSA → scene.dropItem(itemId, count) ile yığının tamamını yere at
+    if (bounds && (pointer.x < bounds.x || pointer.x > bounds.x + bounds.w || pointer.y < bounds.y || pointer.y > bounds.y + bounds.h)) {
+      const dropItem = this._dragItem;
+      this._cancelDrag();
+      if (this.scene.dropItem) {
+        this.scene.dropItem(dropItem.itemId, dropItem.count);
+      }
+      if (this.scene.inventoryUi) this.scene.inventoryUi.refresh();
+      return;
+    }
+
+    // Hedef hücre tespiti
+    let targetIndex = null;
+    const slotSize = (this.window && this.window.slotSize) || 64;
+    const half = slotSize / 2;
+    for (let i = 0; i < this.window.cells.length; i++) {
+      const cell = this.window.cells[i];
+      if (pointer.x >= cell.bg.x - half && pointer.x <= cell.bg.x + half &&
+          pointer.y >= cell.bg.y - half && pointer.y <= cell.bg.y + half) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    const fromIndex = this._dragSourceIndex;
+    this._cancelDrag();
+
+    // b) hücre yoksa veya aynı hücreyse → iptal (refresh ile eski görünüm)
+    if (targetIndex === null || targetIndex === fromIndex) {
+      if (this.scene.inventoryUi) this.scene.inventoryUi.refresh();
+      return;
+    }
+
+    // c) dolu→dolu → inventory.slots üzerinde içerik takası
+    // d) dolu→boş → taşıma (hedefe yaz, kaynaktan sil)
+    const slots = this.scene.inventory ? this.scene.inventory.slots : null;
+    if (slots && slots[fromIndex]) {
+      const temp = slots[fromIndex];
+      slots[fromIndex] = slots[targetIndex] || null;
+      slots[targetIndex] = temp;
+    }
+
+    if (this.scene.inventoryUi) this.scene.inventoryUi.refresh();
   }
 
   // Slotlar envanterin yerleşik sırasını gösterir; seçili slot kare ile işaretlenir.
@@ -245,28 +353,41 @@ export class InventoryView {
     this.dropBuffer = '';
   }
 
+  _entryAt(absIndex) {
+    if (!this.window) return null;
+    return this._byIndex ? this._byIndex.get(absIndex) || null : null;
+  }
+
   // Seçili slotun kaydı (dünya koordinatıyla eşleşmesi için items üzerinden).
   get selectedEntry() {
     if (!this.window || this.selectedIndex === null) return null;
-    return this.window.items[this.selectedIndex] || null;
+    return this._entryAt(this.selectedIndex);
   }
 
   // Hover ve içerik yenileme: her açık frame'de çağrılır.
   refresh(items) {
     if (!this.window) return;
-    this.window.items = items;
+    this.window.items = items || [];
+    const byIndex = new Map();
+    for (const entry of this.window.items) {
+      if (entry && entry.slot && Number.isFinite(entry.index)) {
+        byIndex.set(entry.index, entry);
+      }
+    }
+    this._byIndex = byIndex;
+
     const { cells } = this.window;
     for (let i = 0; i < cells.length; i++) {
-      // items öğeleri { slot: { itemId, count }, index } biçimindedir.
-      const slotData = items[i] ? items[i].slot : null;
+      const entry = this._entryAt(i);
+      const slotData = entry ? entry.slot : null;
       const cell = cells[i];
       const icon = slotData ? this.iconOf(slotData.itemId) : null;
       if (!slotData || !icon) {
         cell.icon.setVisible(false);
         cell.countText.setVisible(false);
         cell.label.setVisible(false);
-        cell.bg.removeAllListeners('pointerover');
-        cell.bg.removeAllListeners('pointerout');
+        cell.bg.off('pointerover');
+        cell.bg.off('pointerout');
         if (this.selectedIndex !== i) cell.bg.setStrokeStyle(0);
         continue;
       }
@@ -299,6 +420,15 @@ export class InventoryView {
   close() {
     if (!this.isOpen) return;
     this.isOpen = false;
+    if (this._onPointerMove) {
+      this.scene.input.off('pointermove', this._onPointerMove);
+      this._onPointerMove = null;
+    }
+    if (this._onPointerUp) {
+      this.scene.input.off('pointerup', this._onPointerUp);
+      this._onPointerUp = null;
+    }
+    this._cancelDrag();
     if (this.window) {
       this.window.group.destroy(true);
       this.window = null;
