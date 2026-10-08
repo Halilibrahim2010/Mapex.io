@@ -69,11 +69,10 @@ async function boot() {
       },
     },
     scale: {
-      // FIT: canvas ekranı doldurur, pikseller bozulmaz (pixelArt + autoRound).
-      mode: Phaser.Scale.FIT,
-      autoRound: 1,
-      width: window.innerWidth,
-      height: window.innerHeight,
+      // RESIZE: canvas her zaman pencere boyutuna eşitlenir; zoom ile
+      // iç çözünürlük otomatik küçülür (ör. 1920/3 = 640, 1080/3 = 360).
+      // F11 / pencere boyutu değişimlerinde ezilme olmaz.
+      mode: Phaser.Scale.RESIZE,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: [PreloadScene, MainScene],
@@ -98,9 +97,8 @@ async function boot() {
   // Böylece 1 tile = 96px (32×3), tüm nesneler aynı ölçekte olur.
   game.scale.setZoom(SCALE_FACTOR);
 
-  window.addEventListener("resize", () => {
-    game.scale.resize(window.innerWidth, window.innerHeight);
-  });
+  // RESIZE modu pencere boyutu değişimlerini otomatik yönetir;
+  // manuel resize dinleyiciye gerek yok.
 
   // Modüller defer ile çalıştığı için DOMContentLoaded çoktan geçmiş olabilir;
   // bu yüzden menüyü doğrudan (veya henüz yüklenmediyse olayda) başlat.

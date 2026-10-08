@@ -67,6 +67,7 @@ export class InventoryView {
   // --- Hotbar (ekranın alt ortası) ---
 
   createHotbar(columns = 5) {
+    this._hotbarColumns = columns;
     const cam = this.scene.cameras.main;
     const group = this.scene.add.group();
     const depth = UI_DEPTH - 1;
@@ -97,12 +98,38 @@ export class InventoryView {
       group.add(countText);
       bg.on('pointerover', () => bg.setTint(0x9fe8a8));
       bg.on('pointerout', () => bg.clearTint());
-      slots.push({ icon, countText });
+      slots.push({ icon, countText, bg });
     }
 
     group.add(this._createHoverText(depth + 1));
     this.hotbar = { group, slots, startX, startY, slot, gap };
+
+    // Pencere boyutu değiştiğinde (F11 vb.) hotbar'ı yeniden konumlandır.
+    this.scene.scale.on('resize', this._repositionHotbar, this);
+
     return this.hotbar;
+  }
+
+  // Hotbar elemanlarını güncel ekran boyutuna göre yeniden konumlandırır.
+  _repositionHotbar() {
+    if (!this.hotbar) return;
+    const cam = this.scene.cameras.main;
+    const columns = this._hotbarColumns || 5;
+    const { slots, slot, gap } = this.hotbar;
+    const totalWidth = columns * slot + (columns - 1) * gap;
+    const newStartX = cam.width / 2 - totalWidth / 2 + slot / 2;
+    const newStartY = cam.height - 48;
+
+    this.hotbar.startX = newStartX;
+    this.hotbar.startY = newStartY;
+
+    for (let i = 0; i < slots.length; i++) {
+      const x = newStartX + i * (slot + gap);
+      const s = slots[i];
+      if (s.bg) s.bg.setPosition(x, newStartY);
+      s.icon.setPosition(x, newStartY - 4);
+      s.countText.setPosition(x + slot / 2 - 4, newStartY + slot / 2 - 6);
+    }
   }
 
   // İkonu slota sığacak şekilde ölçekler (pixel art oranı korunur).
