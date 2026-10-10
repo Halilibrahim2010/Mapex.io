@@ -128,6 +128,18 @@ function attachSocketHandlers(io, world, store, clock, players, authLayer) {
       if (player) socket.broadcast.emit('playerMoved', player);
     });
 
+    socket.on('playerHealth', (data) => {
+      if (!data) return;
+      const player = players.setHealth(socket.id, data.health, data.maxHealth);
+      if (player) {
+        socket.broadcast.emit('playerHealthUpdate', {
+          id: socket.id,
+          health: player.health,
+          maxHealth: player.maxHealth
+        });
+      }
+    });
+
     // İstemci yerel olarak kaldırılan nesneyi bildirir (kesme tamamlanmadan
     // veya yerel mod uyumu için). Sunucu dünya durumunu günceller.
     socket.on('objectRemoved', (data) => {

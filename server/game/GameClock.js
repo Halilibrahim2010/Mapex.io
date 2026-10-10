@@ -40,7 +40,7 @@ class GameClock {
   }
 }
 
-const PLAYER_DEFAULTS = { x: 0, y: 0, facingLeft: false, name: 'Oyuncu', char: 1, anim: 0, hold: null };
+const PLAYER_DEFAULTS = { x: 0, y: 0, facingLeft: false, name: 'Oyuncu', char: 1, anim: 0, hold: null, health: 100, maxHealth: 100 };
 const MAX_CHAR_ID = 18;
 
 class PlayerRegistry {
@@ -74,6 +74,14 @@ class PlayerRegistry {
     if (!player) return null;
     const char = Number.isInteger(value) ? value : null;
     if (char !== null && char >= 1 && char <= MAX_CHAR_ID) player.char = char;
+    return player;
+  }
+
+  setHealth(socketId, health, maxHealth) {
+    const player = this.get(socketId);
+    if (!player) return null;
+    if (Number.isFinite(health)) player.health = Math.max(0, Math.min(player.maxHealth, Number(health)));
+    if (Number.isFinite(maxHealth) && maxHealth > 0) player.maxHealth = Number(maxHealth);
     return player;
   }
 

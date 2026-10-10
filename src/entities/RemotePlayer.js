@@ -33,11 +33,18 @@ export class RemotePlayer {
     this.targetY = y;
     this.facingLeft = false;
     this.animState = ANIM_STATE.IDLE; // Sunucudan gelen animasyon durumu
+    this.health = 100;
+    this.maxHealth = 100;
 
     // Kesme barı (yalnızca karşı oyuncu ağaç keserken görünür).
     this.holdBar = scene.add.graphics();
     this.holdBar.setVisible(false);
     this.hold = { id: null, progress: 0, x: 0, y: 0 };
+  }
+
+  setHealth(health, maxHealth) {
+    if (Number.isFinite(maxHealth) && maxHealth > 0) this.maxHealth = maxHealth;
+    if (Number.isFinite(health)) this.health = Math.max(0, Math.min(this.maxHealth, health));
   }
 
   setName(name) {

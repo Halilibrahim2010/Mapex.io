@@ -8,6 +8,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, charKey);
 
     this.charKey = charKey;
+    this.health = 100;
+    this.maxHealth = 100;
     scene.add.existing(this);
 
     this.setDepth(10);
@@ -21,6 +23,27 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.inputHandler = new PlayerInput(scene);
 
     createCharAnims(scene, this.charKey);
+  }
+
+  setHealth(current, max = this.maxHealth) {
+    this.maxHealth = max > 0 ? max : 100;
+    this.health = Math.max(0, Math.min(this.maxHealth, current));
+    if (this.scene && this.scene.hud) {
+      this.scene.hud.setHealth(this.health, this.maxHealth);
+    }
+    if (this.scene && this.scene.network && this.scene.network.sendHealth) {
+      this.scene.network.sendHealth(this.health, this.maxHealth);
+    }
+  }
+
+  takeDamage(amount) {
+    this.setHealth(this.health - amount, this.maxHealth);
+    return this.health;
+  }
+
+  heal(amount) {
+    this.setHealth(this.health + amount, this.maxHealth);
+    return this.health;
   }
 
   setCharacter(charKey) {

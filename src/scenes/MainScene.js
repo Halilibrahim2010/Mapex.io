@@ -187,6 +187,10 @@ export class MainScene extends Phaser.Scene {
     const charCount = getCharacters().count;
     const charId = (char && char >= 1 && char <= charCount) ? char : 1;
     this.player.setCharacter(`char${charId}`);
+    if (this.hud) {
+      this.hud.setCharacter(`char${charId}`);
+      this.hud.setHealth(this.player.health, this.player.maxHealth);
+    }
     this.player.activateInput();
     this.playerNameText = this.add.text(this.player.x, this.player.y, this.playerName, {
       fontFamily: "Monocraft",

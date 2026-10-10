@@ -159,6 +159,13 @@ export class NetworkManager {
         this.scene.handleRemoteObjectRemoved(data.kind, data.id);
     });
 
+    this.on("playerHealthUpdate", (info) => {
+      const remote = this.remotePlayers.get(info.id);
+      if (remote && remote.setHealth) {
+        remote.setHealth(info.health, info.maxHealth);
+      }
+    });
+
     this.on("inventoryState", (state) => {
       if (this.scene.applyInventoryState) this.scene.applyInventoryState(state);
     });
@@ -187,11 +194,18 @@ export class NetworkManager {
       info.name || "Oyuncu",
       info.char,
     );
+    if (info.health !== undefined && remote.setHealth) {
+      remote.setHealth(info.health, info.maxHealth);
+    }
     this.remotePlayers.set(info.id, remote);
   }
 
   sendMove(x, y, facingLeft, anim, hold) {
     this.emit("playerMove", { x, y, facingLeft, anim, hold });
+  }
+
+  sendHealth(health, maxHealth) {
+    this.emit("playerHealth", { health, maxHealth });
   }
 
   // Dünya nesnesi kaldırıldı (kesilen ağaç, toplanan taş, akan kaya…).
