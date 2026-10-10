@@ -25,7 +25,8 @@
   },
 
   "ui": {
-    "action_panel": "assets/Interface/Action_panel.png"
+    "action_panel": "assets/Interface/Action_panel.png",
+    "hotbar_bg": "assets/Interface/onlyhotbar.png"
   },
 
   "terrain": {

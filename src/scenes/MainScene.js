@@ -68,6 +68,8 @@ export class MainScene extends Phaser.Scene {
 
     const spawn = this._safeSpawnPoint();
     this.player = new Player(this, spawn.x, spawn.y);
+    // Ana menüde arka planda sadece harita görünsün: karakter oyun başlayana dek gizli.
+    this.player.setVisible(false);
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.startFollow(this.player, true, 1, 1);
 
@@ -175,6 +177,11 @@ export class MainScene extends Phaser.Scene {
   startGame(name, char, session) {
     if (this.isStarted) return;
     this.isStarted = true;
+    // Ana menü önizlemesi bitiyor: karakter, konum/saat yazıları ve hotbar görünür.
+    this.player.setVisible(true);
+    this.hud.setVisible(true);
+    this.dayNight.setClockVisible(true);
+    this.inventoryView.setHotbarVisible(true);
     this.session = session || null;
     this.playerName = (name && String(name).trim()) || (this.session && this.session.displayName) || 'Oyuncu';
     const charCount = getCharacters().count;

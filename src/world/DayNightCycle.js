@@ -51,6 +51,11 @@ export class DayNightCycle {
     return this.syncedTime ? this.syncedTime.dayLength : DAY_LENGTH_MS;
   }
 
+  // Oyun başlayınca saat yazısını görünür yapar (menüde sadece harita görünür).
+  setClockVisible(visible) {
+    if (this.clockText) this.clockText.setVisible(Boolean(visible));
+  }
+
   // 0 = full day, 1 = full night.
   create() {
     const w = this.scene.scale.width;
@@ -65,6 +70,8 @@ export class DayNightCycle {
       fontFamily: 'Monocraft', fontSize: '16px', fontStyle: 'bold',
       color: '#ffe9b0', stroke: '#000000', strokeThickness: 3
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(NIGHT_OVERLAY_DEPTH + 1);
+    // Ana menüde arka planda sadece harita görünsün: saat yazısı oyun başlayana dek gizli.
+    this.clockText.setVisible(false);
     this._bindTimeSkipKey();
     this._unbindSettings = onSettingsChange(() => this._bindTimeSkipKey());
     this.refreshSize();

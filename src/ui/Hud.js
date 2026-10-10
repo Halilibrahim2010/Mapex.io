@@ -13,6 +13,7 @@ export class Hud {
     this.yText = null;
     this.sessionText = null;
     this._counts = new Map();
+    this._visible = true;
   }
 
   create() {
@@ -21,6 +22,17 @@ export class Hud {
     // Alt bakiye satırı: yalnızca oturum bu veriyi sağlıyorsa görünür olur.
     this.sessionText = this._text(16, 60, '', '#ffe9a8');
     this.sessionText.setVisible(false);
+    // Ana menüde arka planda sadece harita görünsün: oyun başlayana dek gizli.
+    this.setVisible(false);
+  }
+
+  // Ana menü önizlemesinde tüm HUD yazılarını gizler/gösterir.
+  setVisible(visible) {
+    this._visible = Boolean(visible);
+    if (this.xText) this.xText.setVisible(this._visible);
+    if (this.yText) this.yText.setVisible(this._visible);
+    if (this.sessionText) this.sessionText.setVisible(this._visible && this.sessionText.text !== '');
+    for (const row of this.rows.values()) row.setVisible(false);
   }
 
   // Oturumdan gelen ekonomi özeti. Değerler yoksa satır gizlenir; oyun kodu
@@ -33,7 +45,7 @@ export class Hud {
     }
     const economy = session.economy || {};
     this.sessionText.setText(`🪙 ${Number(economy.gold || 0)}   💎 ${Number(economy.gems || 0)}   ★ ${Number(economy.level || 1)}`);
-    this.sessionText.setVisible(true);
+    this.sessionText.setVisible(this._visible);
     this._itemStartY = 84;
   }
 
@@ -51,6 +63,10 @@ export class Hud {
   // Envanterden gelen özet: [{ itemId, name, count }]
   // Yeni bir kaynak envantere girince satırı otomatik açılır.
   update(items) {
+    if (!this._visible) {
+      for (const row of this.rows.values()) row.setVisible(false);
+      return;
+    }
     let y = this._itemStartY || 60;
     for (const item of items) {
       let row = this.rows.get(item.itemId);
@@ -74,6 +90,7 @@ export class Hud {
   }
 
   setPosition(x, y) {
+    if (!this._visible) return;
     if (this.xText) this.xText.setText('X: ' + x);
     if (this.yText) this.yText.setText('Y: ' + y);
   }
