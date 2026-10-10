@@ -1,10 +1,10 @@
-import { createCharAnims } from '../animations/CharAnims.js';
-import { PixelMovement } from '../utils/Movement.js';
-import { PlayerInput } from '../core/Input.js';
-import { ANIM_STATE, animKeyOf, animStateOf } from './AnimState.js';
+import { createCharAnims } from "../animations/CharAnims.js";
+import { PixelMovement } from "../utils/Movement.js";
+import { PlayerInput } from "../core/Input.js";
+import { ANIM_STATE, animKeyOf, animStateOf } from "./AnimState.js";
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, charKey = 'char1') {
+  constructor(scene, x, y, charKey = "char1") {
     super(scene, x, y, charKey);
 
     this.charKey = charKey;
@@ -12,7 +12,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.maxHealth = 100;
     scene.add.existing(this);
 
-    this.setDepth(10);
+    this.setDepth(8);
     this.setScale(2);
 
     this.facingLeft = false;

@@ -2,7 +2,7 @@ import { RemotePlayer } from "../entities/RemotePlayer.js";
 import { LocalServer } from "./LocalServer.js";
 import { ANIM_STATE } from "../entities/AnimState.js";
 
-const CLIENT_VERSION = "1.0.3";
+const CLIENT_VERSION = "1.0.4";
 
 const SERVER_URL =
   "http://" +
@@ -55,7 +55,7 @@ export class NetworkManager {
           overlay.innerHTML = `
             <div class="menu-card" style="text-align: center; background: #1e1e1e; border: 2px solid #ff4757; padding: 20px; border-radius: 8px;">
               <h1 class="menu-title" style="color: #ff4757;">Güncelleme Gerekli</h1>
-              <p class="menu-sub">Oyununuzun sürümü eskimiş veya uyumsuz.</p>
+              <p class="menu-sub">Oyununuzun sürümü eski veya uyumsuz.</p>
               <p style="font-size: 14px; color: #aaa; margin-top: 10px;">
                 Mevcut: <b>${CLIENT_VERSION}</b> | Gereken: <b>${minVer} - ${maxVer}</b>
               </p>
