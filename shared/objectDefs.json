@@ -363,7 +363,7 @@
                 "depth": 50,
                 "scale": 3,
                 "textures": [
-                    "assets/Objects/Decor/Log2.png"
+                    "assets/weapons/041.png"
                 ]
             },
             "stackLabel": "Sopa"
