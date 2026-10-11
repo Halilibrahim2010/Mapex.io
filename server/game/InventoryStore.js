@@ -1,6 +1,7 @@
 // Sunucu tarafı envanter deposu: oyuncuların envanteri + yerdeki eşyalar.
 // Kalıcı depolama yok; sunucu yeniden başlayınca sıfırlanır (bellek içi state).
 const GameData = require('./GameData');
+const CraftingData = require('./CraftingData');
 const StatsTracker = require('./StatsTracker').StatsTracker;
 const MAX_DROPS = 200;
 
@@ -120,6 +121,61 @@ class InventoryStore {
       return this.snapshot(trackerId);
     }
     this._creditResource(trackerId, drop.itemId, result.added);
+    return this.snapshot(trackerId);
+  }
+
+  // Üretim: istemci tarif kimliği + slot içeriğini gönderir, sunucu doğrular.
+  // Tarif eşleşmezse, girdi yetersizse veya çıktı sığmazsa üretim yapılmaz.
+  craft(socketId, recipeId, slots) {
+    const trackerId = this.stats.idOf(socketId);
+    if (!trackerId || typeof recipeId !== 'string') return null;
+    const recipe = CraftingData.getRecipe(recipeId);
+    if (!recipe) return null;
+    // İstemcinin gönderdiği slotlar tarifle birebir eşleşmeli (sıra + adet).
+    const norm = (slots || []).map((slot) =>
+      slot && slot.itemId ? { itemId: slot.itemId, count: Math.floor(slot.count) || 0 } : null
+    );
+    while (norm.length < 4) norm.push(null);
+    let matched = true;
+    for (let i = 0; i < 4; i++) {
+      const want = recipe.inputs[i] || null;
+      const got = norm[i];
+      if (!want && !got) continue;
+      if (!want || !got) { matched = false; break; }
+      if (want.itemId !== got.itemId || got.count < want.count) { matched = false; break; }
+    }
+    if (!matched) return null;
+    const inv = this.of(trackerId);
+    // Girdiler gerçekten envanterde mi? (istemci yalan söylüyor olabilir)
+    for (const input of recipe.inputs) {
+      let total = 0;
+      for (const slot of inv.slots) {
+        if (slot && slot.itemId === input.itemId) total += slot.count;
+      }
+      if (total < input.count) return null;
+    }
+    // Önce girdileri düş, sonra çıktıyı ekle (çıktı sığmazsa girdiler iade).
+    const removed = [];
+    for (const input of recipe.inputs) {
+      const result = GameData.removeFromInventory(inv, input.itemId, input.count);
+      removed.push({ itemId: input.itemId, count: result.removed });
+      if (result.removed < input.count) {
+        for (const back of removed) {
+          if (back.count > 0) GameData.addToInventory(inv, back.itemId, back.count);
+        }
+        return null;
+      }
+    }
+    // Uretilen esya objectDefs'te tanimli (tarif dogrulamada bakildi).
+    const outResult = GameData.addToInventory(inv, recipe.output.itemId, recipe.output.count);
+    if (outResult.added < recipe.output.count) {
+      // Çıktı tam sığmadı: ekleneni geri al, girdileri iade et.
+      if (outResult.added > 0) GameData.removeFromInventory(inv, recipe.output.itemId, outResult.added);
+      for (const back of removed) {
+        if (back.count > 0) GameData.addToInventory(inv, back.itemId, back.count);
+      }
+      return null;
+    }
     return this.snapshot(trackerId);
   }
 

@@ -13,7 +13,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
 
     this.setDepth(8);
-    this.setScale(2);
+    this.setScale(3);
 
     this.facingLeft = false;
     this.chopAnim = false;

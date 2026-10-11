@@ -335,6 +335,38 @@ export class InventoryView {
     this.refresh(items);
   }
 
+  // Envanterin altına "Üretim" düğmesi: üretim panellerini açar/kapar.
+  // Sahne toggleInventory içinde bağlar; pencere kapanınca düğme de gider.
+  addCraftButton(onPress) {
+    if (!this.window) return;
+    this._removeCraftButton();
+    const { group, panelBounds } = this.window;
+    const d = UI_DEPTH + 1;
+    const bw = 180;
+    const bh = 44;
+    const bx = panelBounds.x + panelBounds.w / 2;
+    const by = panelBounds.y + panelBounds.h + bh / 2 + 10;
+    const bg = this.scene.add.rectangle(bx, by, bw, bh, 0x435d2d)
+      .setDepth(d).setScrollFactor(0).setInteractive();
+    group.add(bg);
+    const label = this.scene.add.text(bx, by, 'Üretim', {
+      fontFamily: 'Monocraft', fontSize: '20px', fontStyle: 'bold', color: '#d8f2a5'
+    }).setOrigin(0.5).setDepth(d).setScrollFactor(0);
+    group.add(label);
+    bg.on('pointerover', () => bg.setFillStyle(0x536f35));
+    bg.on('pointerout', () => bg.setFillStyle(0x435d2d));
+    bg.on('pointerdown', () => { if (onPress) onPress(); });
+    this._craftButton = { bg, label };
+  }
+
+  _removeCraftButton() {
+    if (this._craftButton) {
+      if (this._craftButton.bg) this._craftButton.bg.destroy();
+      if (this._craftButton.label) this._craftButton.label.destroy();
+      this._craftButton = null;
+    }
+  }
+
   _createCell(group, index, x, y, slot, d) {
     const bg = this.scene.add
       .rectangle(x, y, slot, slot, 0x241a10)
@@ -401,6 +433,29 @@ export class InventoryView {
     this.scene.input.setDefaultCursor("grabbing");
   }
 
+  // Üretim panelinin envanterin sağında açılabilmesi için panel konumu.
+  // CraftingView bu çerçeveyi anchor olarak alır.
+  get panelBounds() {
+    if (!this.window) return null;
+    return { ...this.window.panelBounds };
+  }
+
+  // Envanter hücresinden sürüklenen eşyayı üretim slotuna bırakma.
+  // CraftingView açık ve hedef üretim slotuysa { craftSlot } döner.
+  dropTargetAt(worldX, worldY) {
+    if (this.craftingView && this.craftingView.isOpen && this.craftingView.slotCells) {
+      for (let i = 0; i < this.craftingView.slotCells.length; i++) {
+        const cell = this.craftingView.slotCells[i];
+        if (!cell || !cell.bg || !cell.bg.active) continue;
+        const b = cell.bg.getBounds();
+        if (worldX >= b.left && worldX <= b.right && worldY >= b.top && worldY <= b.bottom) {
+          return { craftSlot: i };
+        }
+      }
+    }
+    return null;
+  }
+
   _cancelDrag() {
     if (this._ghostIcon) {
       this._ghostIcon.destroy();
@@ -422,6 +477,18 @@ export class InventoryView {
     }
 
     const bounds = this.window && this.window.panelBounds;
+    // a0) hedef üretim slotuysa: eşyayı oraya koy (envanterden düşmez,
+    // üretim anında sunucu/yerel doğrulama ile düşer).
+    const craftTarget = this.dropTargetAt(pointer.x, pointer.y);
+    if (craftTarget && this.craftingView) {
+      const dragItem = this._dragItem;
+      const fromIndex = this._dragSourceIndex;
+      this._cancelDrag();
+      // Sürüklenen yığının 1 tanesi üretim slotuna konur (adet tarifle eşleşir).
+      this.craftingView.setSlot(craftTarget.craftSlot, dragItem.itemId, 1);
+      if (this.scene.inventoryUi) this.scene.inventoryUi.refresh();
+      return;
+    }
     // a) pointer panelBounds DIŞINDAYSA → scene.dropItem(itemId, count) ile yığının tamamını yere at
     if (
       bounds &&
@@ -555,6 +622,7 @@ export class InventoryView {
   close() {
     if (!this.isOpen) return;
     this.isOpen = false;
+    this._removeCraftButton();
     if (this._onPointerMove) {
       this.scene.input.off("pointermove", this._onPointerMove);
       this._onPointerMove = null;

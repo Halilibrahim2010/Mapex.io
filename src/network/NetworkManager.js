@@ -2,7 +2,7 @@ import { RemotePlayer } from "../entities/RemotePlayer.js";
 import { LocalServer } from "./LocalServer.js";
 import { ANIM_STATE } from "../entities/AnimState.js";
 
-const CLIENT_VERSION = "1.0.4";
+const CLIENT_VERSION = "1.1.0";
 
 const SERVER_URL =
   "http://" +
@@ -160,9 +160,40 @@ export class NetworkManager {
     });
 
     this.on("playerHealthUpdate", (info) => {
+      if (!info) return;
       const remote = this.remotePlayers.get(info.id);
       if (remote && remote.setHealth) {
         remote.setHealth(info.health, info.maxHealth);
+        return;
+      }
+      // Kendi canimiz: /player set health ile sunucuda degistirilmis olabilir.
+      // Dogrudan uygulanir (setHealth echo paketi gondermesin diye).
+      if (info.id === this.socket.id && this.scene.player) {
+        const player = this.scene.player;
+        const max =
+          Number(info.maxHealth) > 0
+            ? Number(info.maxHealth)
+            : player.maxHealth;
+        player.maxHealth = max;
+        player.health = Math.max(0, Math.min(max, Number(info.health) || 0));
+        if (this.scene.hud && this.scene.hud.setHealth) {
+          this.scene.hud.setHealth(player.health, player.maxHealth);
+        }
+      }
+    });
+
+    // Debug: hitboxlar tum istemcilerde ayni anda acilir/kapanir
+    // (/collider show|hide komutunun yayini).
+    this.on("debugCollider", (data) => {
+      if (this.scene.debugOverlay) {
+        this.scene.debugOverlay.setVisible(Boolean(data && data.visible));
+      }
+    });
+
+    // Debug: tile/chunk izgarasi (/tile show|hide komutunun yayini).
+    this.on("debugTile", (data) => {
+      if (this.scene.debugOverlay) {
+        this.scene.debugOverlay.setTileVisible(Boolean(data && data.visible));
       }
     });
 
@@ -238,6 +269,11 @@ export class NetworkManager {
   // Sohbet: sunucu mesajı doğrular, yayar ve son mesajları saklar.
   sendChat(kind, text, to) {
     this.emit("chatSend", { kind, text, to });
+  }
+
+  // Üretim: tarif kimliği + slot içeriği sunucuya gider, sonuç inventoryState ile döner.
+  sendCraft(recipeId, slots) {
+    this.emit("craft", { recipeId, slots });
   }
 
   requestChatHistory() {

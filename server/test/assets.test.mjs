@@ -54,13 +54,53 @@ check('en az bir nesnede gölge var', shadowDefs.length > 0,
 // groundOffset olmadan nesne havada durur ve gölge/collider aşağı kayar.
 for (const [id, def] of Object.entries(objectDefs())) {
   const s = def.sprite;
-  if (!s || !s.collider) continue;
+  if (!s || !s.box) continue;
+  const b = s.box;
   check(`engel yer çizgisi tanımlı: ${id}`, Number.isFinite(s.groundOffset), s.groundOffset);
-  check(`engel collider genişliği var: ${id}`, Number.isFinite(s.colliderW), s.colliderW);
-  check(`engel collider yüksekliği var: ${id}`, Number.isFinite(s.colliderH), s.colliderH);
-  check(`engel collider oranı makul: ${id}`,
-    s.colliderW > 8 && s.colliderW <= 64 && s.colliderH > 6 && s.colliderH <= 32,
-    `${s.colliderW}x${s.colliderH}`);
+  check(`engel box genişliği var: ${id}`, Number.isFinite(b.w), b.w);
+  check(`engel box yüksekliği var: ${id}`, Number.isFinite(b.h), b.h);
+  check(`engel box oranı makul: ${id}`,
+    b.w > 8 && b.w <= 128 && b.h > 6 && b.h <= 128,
+    `${b.w}x${b.h}`);
+}
+
+// Varyant overrides: aynı nesnenin farklı PNG'leri farklı collider/shape
+// taşıyabilir (örn. kütük Log1–Log4). Her varyant: texture mevcut, shape
+// pozitif, collider makul aralıkta olmalı.
+for (const [id, def] of Object.entries(objectDefs())) {
+  if (!def.variants || !def.variants.length) continue;
+  const seen = new Set();
+  for (const v of def.variants) {
+    const tag = `varyant: ${id} ${v.texture ? v.texture.split('/').pop() : '?'}`;
+    check(`${tag} texture mevcut`, v.texture && def.textures.includes(v.texture), v.texture);
+    check(`${tag} tekrarsız`, !seen.has(v.texture), v.texture);
+    if (v.texture) seen.add(v.texture);
+    check(`${tag} shape geçerli`, v.shape && v.shape.w > 0 && v.shape.h > 0, v.shape);
+    if (v.sprite && v.sprite.box) {
+      const box = v.sprite.box;
+      const maxDim = Math.max(box.w, box.h);
+      const minDim = Math.min(box.w, box.h);
+      check(`${tag} box makul`,
+        Number.isFinite(box.w) && Number.isFinite(box.h) &&
+        box.w > 8 && box.h > 6 &&
+        maxDim <= 128 && minDim >= 6,
+        `${box.w}x${box.h}`);
+    }
+  }
+  // Varyant sayısı, texture sayısını aşmamalı (yanlış yolları engeller).
+  check(`varyant sayısı tutarlı: ${id}`, def.variants.length <= def.textures.length,
+    `${def.variants.length} <= ${def.textures.length}`);
+}
+
+// Kütük varyantları: 4 PNG de tanımlı olmalı, Log3 yatay / Log4 dikey shape
+// (kullanıcı tanımı: log3 4x1 yerine gerçek ölçüye göre, log4 dikey).
+const logDef = getObjectDef('log');
+if (logDef && logDef.variants && logDef.variants.length) {
+  check('kütük 4 varyant tanımlı', logDef.variants.length === 4, logDef.variants.length);
+  const v3 = logDef.variants.find(v => v.texture && v.texture.includes('Log3'));
+  const v4 = logDef.variants.find(v => v.texture && v.texture.includes('Log4'));
+  check('log3 yatay shape', v3 && v3.shape.w > v3.shape.h, v3 && v3.shape);
+  check('log4 dikey shape', v4 && v4.shape.h > v4.shape.w, v4 && v4.shape);
 }
 
 // Gölge offsetY artık YER ÇİZGİSİNDEN ölçülür: büyük değer gölgeyi aşağı

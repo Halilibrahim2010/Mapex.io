@@ -2,6 +2,7 @@ import { PreloadScene } from "./scenes/PreloadScene.js";
 import { MainScene } from "./scenes/MainScene.js";
 import { initMenu } from "./ui/Menu.js";
 import { ensureGameData } from "./core/ObjectDefs.js";
+import { ensureCraftingData } from "./core/Crafting.js";
 import { initAccount } from "./account/index.js";
 import "./core/StartRequest.js";
 
@@ -10,6 +11,13 @@ import "./core/StartRequest.js";
 async function boot() {
   try {
     await ensureGameData();
+    // Üretim tarifleri oyun verisiyle birlikte yüklenir (menü/envanter için).
+    // Bozuksa oyun açılır ama üretim menüsü boş kalır.
+    try {
+      await ensureCraftingData();
+    } catch (craftError) {
+      console.warn("Üretim tarifleri yüklenemedi:", craftError);
+    }
   } catch (error) {
     console.error("Oyun verisi yüklenemedi:", error);
     const overlay = document.getElementById("menu-overlay");
@@ -57,6 +65,7 @@ async function boot() {
     parent: "game-container",
     pixelArt: true,
     roundPixels: true,
+    antialias: false,
     clearBeforeRender: true,
     backgroundColor: "#000000",
     physics: {

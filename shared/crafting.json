@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "recipes": [
+    {
+      "id": "stick",
+      "inputs": [{ "itemId": "wood", "count": 1 }],
+      "output": { "itemId": "stick", "count": 1 }
+    }
+  ]
+}

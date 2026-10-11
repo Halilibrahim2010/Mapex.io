@@ -2,7 +2,9 @@
 // Hangi türün nasıl çizileceği tamamen shared/objectDefs.json'dan gelir:
 // yeni bir nesne eklemek için buraya kod yazmak GEREKMEZ.
 import { eachChunkInWindow } from '../world/WindowHelper.js';
-import { getObjectDef, getGameData } from '../core/ObjectDefs.js';
+import { getObjectDef, getGameData, resolveCollider, resolveGroundOffset } from '../core/ObjectDefs.js';
+
+const SHADOW_DEPTH = 1;
 
 export class ObjectLayer {
   constructor(scene, generator, terrain, removed) {
@@ -63,21 +65,30 @@ export class ObjectLayer {
     this.records.set(id, record);
 
     // Çarpışma kutusu nesnenin AYAK İZİDİR: yere basan noktaya göre
-    // ortalanır, genişliği/derinliği colliderW/colliderH ile verilir.
-    // (collider tek sayıysa kare kabul edilir — eski tanımlar bozulmasın.)
-    if (def.sprite.collider) {
-      const w = def.sprite.colliderW !== undefined
-        ? def.sprite.colliderW
-        : def.sprite.collider * this.gen.tileSize;
-      const h = def.sprite.colliderH !== undefined
-        ? def.sprite.colliderH
-        : def.sprite.collider * this.gen.tileSize;
-            this.colliders.set(id, {
-        x: data.x - w / 2,
-        y: groundY - h,
+    // ortalanır, genişliği/derinliği box.w/box.h ile verilir.
+    // Varyant tanımlıysa (örn. Log1–Log4) o PNG'ye ait box kullanılır.
+    // box.angle (derece) kutuyu merkezde döndürür; box.left/top lokal ofseti,
+    // box.offsetY dikey kaydırır.
+    const colliderDef = resolveCollider(def, data.texture);
+    const box = colliderDef && colliderDef.box;
+    if (box) {
+      const w = box.w;
+      const h = box.h;
+      const left = Number.isFinite(box.left) ? box.left : 0;
+      const top = Number.isFinite(box.top) ? box.top : 0;
+      const offsetY = Number.isFinite(box.offsetY) ? box.offsetY : 0;
+      const angle = Number.isFinite(box.angle) ? Phaser.Math.DegToRad(box.angle) : 0;
+      const cx = data.x + left;
+      const cy = groundY + top - h / 2 + offsetY;
+      this.colliders.set(id, {
+        x: cx - w / 2,
+        y: cy - h / 2,
         w,
-        h
-            });
+        h,
+        cx,
+        cy,
+        angle
+      });
     }
     if (def.light) {
       this.lights.set(id, { x: data.x, y: data.y, radius: def.light.radius, strength: def.light.strength });
@@ -92,18 +103,21 @@ export class ObjectLayer {
     sprite.setOrigin(origin === undefined ? 0.5 : origin,
       def.sprite.originY === undefined ? 0.5 : def.sprite.originY);
     if (def.sprite.scale) sprite.setScale(def.sprite.scale);
-    if (def.sprite.display) {
-      const size = this.gen.tileSize * def.sprite.display;
-      sprite.setDisplaySize(size, size);
-    }
     // groundOffset: sprite merkezinden yere dokunana kadar olan mesafe (px).
     // Gölge ve çarpışma kutusu bu ortak "yer çizgisine" göre hizalanır.
-    const groundY = data.y + (def.sprite.groundOffset || 0);
-    const depth = def.sprite.depth === 3000 ? this._sortDepth(groundY) : def.sprite.depth;
+    // Varyant (PNG) başına farklı olabilir — Log1–Log4 gibi.
+    const groundOffset = resolveGroundOffset(def, data.texture);
+    const groundY = data.y + groundOffset;
+    const depth = this._resolveDepth(def, groundY);
     sprite.setDepth(depth);
     const shadow = this._createShadow(def, data.x, groundY);
-    if (shadow) shadow.setDepth(depth - 1);
+    if (shadow) shadow.setDepth(SHADOW_DEPTH);
     return { sprite, shadow, groundY };
+  }
+
+  _resolveDepth(def, groundY) {
+    if (!def || !def.sprite || !Number.isFinite(def.sprite.depth)) return 0;
+    return def.sprite.depth >= 3000 ? this._sortDepth(groundY) : def.sprite.depth;
   }
 
   // Gölge: tanımdaki "shadow" bloğu varsa nesnenin AYAKLARININ ALTINA,
@@ -117,6 +131,8 @@ export class ObjectLayer {
     // offsetY yer çizgisinden ölçülür; 0 gölgeyi tam ayağın üstüne oturtur.
     const sprite = this.scene.add.image(x + (shadow.offsetX || 0), groundY + (shadow.offsetY || 0), texture);
     if (shadow.width && shadow.height) sprite.setDisplaySize(shadow.width, shadow.height);
+    const scale = def && def.sprite && Number.isFinite(def.sprite.scale) ? def.sprite.scale : 1;
+    if (scale !== 1) sprite.setScale(scale);
     if (shadow.alpha !== undefined) sprite.setAlpha(shadow.alpha);
     sprite.setOrigin(0.5, 0.5);
     return sprite;
@@ -129,11 +145,11 @@ export class ObjectLayer {
 
   refreshDepths() {
     for (const record of this.records.values()) {
-      if (record.def.sprite.depth !== 3000 || !record.sprite) continue;
-      const depth = this._sortDepth(record.groundY);
+      if (!record || !record.sprite) continue;
+      const depth = this._resolveDepth(record.def, record.groundY);
       record.sprite.setDepth(depth);
-      // Gölge her zaman nesnenin bir alt katmanında kalmalı.
-      if (record.shadow) record.shadow.setDepth(depth - 1);
+      // Gölge her zaman genel gölge katmanında kalmalı; hiçbir gölge başka bir nesneyi kapatmasın.
+      if (record.shadow) record.shadow.setDepth(SHADOW_DEPTH);
     }
   }
 

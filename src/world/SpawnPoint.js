@@ -1,7 +1,7 @@
 // Güvenli doğuş noktası: oyuncunun engel (kaya/ağaç) collider'ı veya su içinde
 // doğup hareket edememesi sorununu önler. (0,0) çevresinden dışa doğru halka
 // halka taranır ve ilk uygun karo merkezi döndürülür.
-import { getObjectDef } from '../core/ObjectDefs.js';
+import { getObjectDef, resolveCollider } from '../core/ObjectDefs.js';
 
 const SEARCH_RADIUS = 12; // taranacak karo yarıçapı
 const FEET_OFFSET = 34; // su kontrolü ayak yüksekliği (InteractionSystem ile aynı)
@@ -13,15 +13,21 @@ function blockedTiles(generator, tileSize, chunkX, chunkY) {
 
   for (const [type, list] of Object.entries(perType)) {
     const def = getObjectDef(type);
-    if (!def || !def.sprite.collider) continue;
-    const size = tileSize * def.sprite.collider;
-    const offsetY = def.sprite.colliderOffsetY || 0;
+    if (!def) continue;
 
     for (const data of list) {
-      const left = Math.floor((data.x - size / 2) / tileSize);
-      const right = Math.floor((data.x + size / 2) / tileSize);
-      const top = Math.floor((data.y - size / 2 + offsetY) / tileSize);
-      const bottom = Math.floor((data.y + size / 2 + offsetY) / tileSize);
+      // Varyant tanımlıysa (örn. Log1–Log4) o PNG'ye ait box kullanılır;
+      // yoksa nesnenin root box'ı geçerlidir.
+      const col = resolveCollider(def, data.texture);
+      const box = col && col.box;
+      if (!box) continue;
+      const w = box.w;
+      const h = box.h;
+      const offsetY = box.offsetY || 0;
+      const left = Math.floor((data.x - w / 2) / tileSize);
+      const right = Math.floor((data.x + w / 2) / tileSize);
+      const top = Math.floor((data.y - h / 2 + offsetY) / tileSize);
+      const bottom = Math.floor((data.y + h / 2 + offsetY) / tileSize);
       for (let ty = top; ty <= bottom; ty++) {
         for (let tx = left; tx <= right; tx++) blocked.add(`${tx},${ty}`);
       }

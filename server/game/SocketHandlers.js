@@ -12,11 +12,15 @@
 //   bu dosya değişmez.
 const GameData = require('./GameData');
 const { ChatStore } = require('./ChatStore');
+const DebugCommands = require('./DebugCommands');
 const { SessionFactory } = require('../auth/SessionFactory');
 
 function attachSocketHandlers(io, world, store, clock, players, authLayer) {
   // Sohbet tek bir depoda tutulur: sunucu geçmişin ve doğrulamanın sahibidir.
   const chat = new ChatStore();
+  // Debug komutlarinin durumu sunucuda yasanir (orn. hitbox/tile gorunurlugu):
+  // boylece sonradan katilan oyuncular da mevcut durumu alir.
+  const debugState = { colliderVisible: false, tileVisible: false };
   // Auth katmanı verilmediyse (eski testler) misafir oturumlarıyla devam et.
   const sessions = (authLayer && authLayer.sessions)
     || new SessionFactory({ auth: null, repository: null }).useDefaults();
@@ -71,6 +75,13 @@ function attachSocketHandlers(io, world, store, clock, players, authLayer) {
     socket.emit('currentPlayers', players.all());
     socket.emit('worldState', world.snapshot());
     socket.emit('timeState', clock.state());
+    // Debug durumu yeni katilana da gonderilir (orn. acik hitbox/tile gorunurlugu).
+    if (debugState.colliderVisible) {
+      socket.emit('debugCollider', { visible: true });
+    }
+    if (debugState.tileVisible) {
+      socket.emit('debugTile', { visible: true });
+    }
     socket.broadcast.emit('playerJoined', players.get(socket.id));
 
     socket.on('hello', (data) => {
@@ -193,12 +204,36 @@ function attachSocketHandlers(io, world, store, clock, players, authLayer) {
       io.emit('dropsSpawned', { drops: result.drops });
     });
 
+    // Üretim: sunucu tarif + envanteri doğrular, sonucu yayınlar.
+    socket.on('craft', (data) => {
+      if (!data || typeof data.recipeId !== 'string') return;
+      const state = store.craft(socket.id, data.recipeId, data.slots);
+      if (state) socket.emit('inventoryState', state);
+    });
+
     socket.on('timeSkip', (data) => clock.skip(data && data.ms));
 
     // Sohbet: mesaj doğrulanır (boş/uzun/spam reddedilir), sonra yayılır.
     // Genel mesaj herkese, özel mesaj yalnızca hedef oyuncuya gider.
-    socket.on('chatSend', (data) => {
+    // "/" ile başlayan metin debug komutudur: sohbete düşmez, çalıştırılır.
+    socket.on('chatSend', async (data) => {
       const player = players.get(socket.id);
+      const rawText = data && typeof data.text === 'string' ? data.text.trim() : '';
+      if (DebugCommands.isCommand(rawText)) {
+        const result = await DebugCommands.run(
+          { io, socket, players, store, clock, world, chat, debugState },
+          rawText
+        );
+        if (result && result.reply) {
+          socket.emit('chatMessage', chat.store({
+            kind: 'system', fromId: null, from: 'Sistem', to: player ? player.name : null, text: result.reply
+          }));
+        }
+        if (result && result.broadcast) {
+          io.emit(result.broadcast.event, result.broadcast.data);
+        }
+        return;
+      }
       const message = chat.sanitize(data, player);
       if (!message) return;
       if (message.kind !== 'private') {
@@ -225,6 +260,22 @@ function attachSocketHandlers(io, world, store, clock, players, authLayer) {
       io.emit('playerLeft', socket.id);
     });
   });
+
+  // Sunucu tarafından doğrudan komut çalıştırma (terminal REPL / test için).
+  // Sohbet akışındaki "/komut" mantığının aynısıdır; yalnızca cevap terminale
+  // yazılır ve broadcast (io.emit) yapılır. socket gerekmez — null geçilir.
+  async function runCommand(text) {
+    const result = await DebugCommands.run(
+      { io, socket: null, players, store, clock, world, chat, debugState },
+      text
+    );
+    if (result && result.broadcast) {
+      io.emit(result.broadcast.event, result.broadcast.data);
+    }
+    return result;
+  }
+
+  return { debugState, runCommand };
 }
 
 module.exports = { attachSocketHandlers };

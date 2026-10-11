@@ -42,6 +42,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   // JSON'daki her sprite dosyası benzersiz anahtarla yüklenir (dosya yolu = anahtar).
+  // Uretim cikti ikonlari objectDefs'ten geldigi icin ekstra yukleme gerekmez.
   loadDefinedSprites() {
     for (const path of spriteFileList()) {
       if (this.textures.exists(path)) continue;

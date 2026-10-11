@@ -134,7 +134,7 @@ Yeni bir nesne eklemek için JSON'a bir kayıt eklemek yeterlidir:
   "kind": "resource",
   "interaction": "pickup",
   "shape": { "w": 1, "h": 1 },
-  "sprite": { "atlas": "assets/Objects/Stone/{n}.png", "variants": 16, "display": 0.42, "depth": 2 },
+  "sprite": { "textures": ["assets/Objects/Stone/1.png", "assets/Objects/Stone/2.png", "assets/Objects/Stone/3.png", "assets/Objects/Stone/4.png", "assets/Objects/Stone/5.png", "assets/Objects/Stone/6.png"], "depth": 2 },
   "spawn": { "chance": 0.1, "cells": 4, "salt": 7, "size": "small" },
   "pickup": { "range": 52 }
 }
@@ -150,11 +150,11 @@ girer, HUD/envanterde görünür ve sunucu tarafında doğrulanır.
 | `kind` | `resource` \| `obstacle` \| `harvestable` \| `decor` |
 | `interaction` | `pickup` (E ile al) \| `hold` (basılı tut, kes) \| `none` |
 | `shape` | Kapladığı karo sayısı (`w`, `h`) |
-| `sprite` | `atlas` içindeki `{n}` yerine sıra numarası/`variants`; `scale`, `display`, `depth`, `origin`, **`groundOffset`** |
+| `sprite` | `textures` (açık dosya listesi); `scale`, `depth`, `origin`, **`groundOffset`** |
 | `shadow` | Zemin gölgesi: `n` (1-6), `offsetY`, `width`, `height`, `alpha` |
-| `spawn` | Deterministik üretim: `chance`, `cells`, `salt`, `bigOnly`, `size`, `texMin`/`texMax` |
-| `collider` | Çarpışma kutusu: `colliderW` × `colliderH` (piksel), `collider` (karo oranı yedeği) |
-| `harvest` | `holdTime` (saniye), `range`, vuruş alanı |
+| `spawn` | Deterministik üretim: `chance`, `cells`, `salt`, `bigOnly`, `size` |
+| `collider` | `box` (çarpışma kutusu): `w`×`h` (piksel), `angle` (derece, opsiyonel), `offsetY` (dikey kaydırma) |
+| `harvest` | `holdTime` (saniye), `range`, `hitHalfWidth`, `shakes` |
 | `pickup` | Alma menzili |
 | `drop` | Kırılınca düşen eşya (`itemId`, `count`, `countMax`) |
 | `stump` | Kırıldıktan sonra kalan görsel (+ isteğe bağlı `shadow`) |
@@ -168,7 +168,7 @@ girer, HUD/envanterde görünür ve sunucu tarafında doğrulanır.
 "log": {
   "kind": "harvestable", "interaction": "hold",
   "sprite": { "atlas": "assets/Objects/Decor/Log{n}.png", "variants": 4, "scale": 1.15,
-              "depth": 2, "collider": 0.5, "colliderOffsetY": 6 },
+              "depth": 2, "box": { "w": 26, "h": 12, "offsetY": 6 } },
   "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 3, "offsetY": 6,
               "width": 26, "height": 11, "alpha": 0.36 },
   "harvest": { "holdTime": 5.6, "range": 62, "hitHalfWidth": 26, "shakes": 2 },
@@ -317,8 +317,8 @@ farktır (piksel). Gölge ve collider bu tek "yer çizgisi"ne göre hizalanır:
 
 ```json
 "sprite": {
-  "atlas": "assets/Objects/Rock/{n}.png", "variants": 8, "display": 0.85,
-  "groundOffset": -6, "collider": 0.85, "colliderW": 44, "colliderH": 16
+  "sprite": { "textures": ["assets/Objects/Rock/1.png", "assets/Objects/Rock/2.png", "assets/Objects/Rock/3.png", "assets/Objects/Rock/4.png", "assets/Objects/Rock/5.png", "assets/Objects/Rock/6.png", "assets/Objects/Rock/7.png", "assets/Objects/Rock/8.png", "assets/Objects/Rock/9.png", "assets/Objects/Rock/10.png"],
+  "groundOffset": -6, "box": { "w": 44, "h": 16 }
 }
 ```
 
@@ -333,9 +333,18 @@ farktır (piksel). Gölge ve collider bu tek "yer çizgisi"ne göre hizalanır:
 
 Kurallar:
 
-- **Collider ayak izidir:** `colliderW` × `colliderH` kutusu yer çizgisine
+- **Collider ayak izidir:** `box.w` × `box.h` kutusu yer çizgisine
   **alt kenarından oturur** (`y = groundY - h`). Eski `collider` alanı karo
   oranı olarak geriye dönük uyumludur (tek sayı verilirse kare kabul edilir).
+- **Açılı collider:** `box.angle` (derece) verilirse kutu, ayak izinin
+  **merkezinde** döner (OBB). Çarpışma ve `/collider show` bu açıyı görür;
+  verilmezse klasik eksene hizalı kutu (0°) kullanılır. `box.offsetY` kutuyu
+  dikey kaydırır.
+- **PNG başına değişir (`variants`):** Aynı nesnenin farklı PNG'leri farklı
+  `shape`, `sprite.box` (`w`/`h`/`angle`/`offsetY`) ve
+  `sprite.groundOffset` taşıyabilir. Log1–Log4 gibi: `Log3` 5×2 yatay,
+  `Log4` 2×5 dikey collider kullanır. `variants[]` içindeki `texture` ile
+  eşleşen ayarlar geçerli olur, yoksa root `sprite`'a geri düşülür.
 - **Gölge `offsetY` yer çizgisinden ölçülür.** `0` gölgeyi tam ayağın üstüne
   oturtur; pozitif değer aşağı kaydırır.
 - Ağaç gibi y-sıralı nesnelerde derinlik `data.y` yerine `groundY`'den

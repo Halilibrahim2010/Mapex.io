@@ -13,13 +13,8 @@ const files = new Set();
 files.add(sub(data.terrain.ground.atlas, data.terrain.ground.n));
 for (let i = 1; i <= (data.terrain.grass.variants || 1); i++) files.add(sub(data.terrain.grass.atlas, i));
 for (const obj of Object.values(data.objects)) {
-  const sprite = obj.sprite;
-  if (!sprite) continue;
-  const variants = sprite.variants || 1;
-  for (let i = 0; i < variants; i++) {
-    const value = sprite.n !== undefined ? sprite.n : i + 1;
-    files.add(sub(sprite.atlas, value));
-  }
+  // sprite artık açık textures listesi taşır (atlas şablonu yok).
+  for (const t of (obj.sprite && obj.sprite.textures) || []) files.add(t);
   if (obj.stump) files.add(sub(obj.stump.atlas, obj.stump.n));
   if (obj.shadow) files.add(sub(obj.shadow.atlas, obj.shadow.n));
 }

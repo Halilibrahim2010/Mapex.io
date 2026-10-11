@@ -1,166 +1,585 @@
 {
-  "tileSize": 32,
-  "chunkSize": 16,
-  "inventorySlots": 15,
-  "inventoryMaxStack": 99,
-
-  "render": {
-    "grassCells": 4,
-    "grassChance": 0.8,
-    "grassDensity": 0.36,
-    "fallbackTile": "assets/Tiles0/FieldsTile_38.png"
-  },
-
-  "stats": [
-    { "id": "chopped", "label": "Kesilen Ağaç", "resource": "wood", "source": "tree" },
-    { "id": "logs", "label": "Kesilen Kütük", "resource": "wood", "source": "log" }
-  ],
-
-  "characters": {
-    "count": 18,
-    "frameWidth": 64,
-    "frameHeight": 64,
-    "files": [ "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "12.png", "13.png", "14.png", "15.png", "16.png", "17.png", "18.png" ],
-    "names": [ "Altın Saçlı Çocuk", "Yeşil Saçlı Çocuk", "Turuncu Saçlı Adam", "Yeşil Saçlı Adam", "Ninja", "Pembe Saçlı Kadın", "Yeşil Başlıklı Çocuk", "Mavi Saçlı Adam", "Korsan", "Romalı Savaşçı", "Zırhlı Savaşçı", "Gladyatör", "Zırhlı Ninja", "Zırhlı Savaşçı 2", "Ateş Canavarı", "Mor Canavar", "Kırmızı Beyin", "Böcek" ]
-  },
-
-  "ui": {
-    "action_panel": "assets/Interface/Action_panel.png",
-    "hotbar_bg": "assets/Interface/onlyhotbar.png",
-    "panel_empty": "assets/Interface/panel_empty.png",
-    "bar_red": "assets/Interface/bar_red.png"
-  },
-
-  "terrain": {
-    "ground": { "atlas": "assets/Tiles0/FieldsTile_{n}.png", "n": 38 },
-    "water": { "deep": "#2e6da4", "mid": "#418fc0", "shallow": "#63b3d9", "foam": "#d9f0f7" },
-    "grass": {
-      "atlas": "assets/Objects/Grass/{n}.png",
-      "variants": 6,
-      "spawnChance": 0.36,
-      "depth": 1
+    "characters": {
+        "count": 18,
+        "files": [
+            "1.png",
+            "2.png",
+            "3.png",
+            "4.png",
+            "5.png",
+            "6.png",
+            "7.png",
+            "8.png",
+            "9.png",
+            "10.png",
+            "11.png",
+            "12.png",
+            "13.png",
+            "14.png",
+            "15.png",
+            "16.png",
+            "17.png",
+            "18.png"
+        ],
+        "frameHeight": 64,
+        "frameWidth": 64,
+        "names": [
+            "Altın Saçlı Çocuk",
+            "Yeşil Saçlı Çocuk",
+            "Turuncu Saçlı Adam",
+            "Yeşil Saçlı Adam",
+            "Ninja",
+            "Pembe Saçlı Kadın",
+            "Yeşil Başlıklı Çocuk",
+            "Mavi Saçlı Adam",
+            "Korsan",
+            "Romalı Savaşçı",
+            "Zırhlı Savaşçı",
+            "Gladyatör",
+            "Zırhlı Ninja",
+            "Zırhlı Savaşçı 2",
+            "Ateş Canavarı",
+            "Mor Canavar",
+            "Kırmızı Beyin",
+            "Böcek"
+        ]
     },
-    "lake": {
-      "chance": 0.12,
-      "minRadius": 2,
-      "radiusSpread": 3,
-      "minLobes": 1,
-      "lobeSpread": 3,
-      "lobeMinRadius": 1,
-      "lobeRadiusSpread": 3
+    "chunkSize": 16,
+    "inventoryMaxStack": 99,
+    "inventorySlots": 15,
+    "objects": {
+        "flower": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "none",
+            "kind": "decor",
+            "name": "Çiçek",
+            "sprite": {
+                "depth": 10,
+                "origin": 0,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Flower/1.png",
+                    "assets/Objects/Flower/2.png",
+                    "assets/Objects/Flower/3.png",
+                    "assets/Objects/Flower/4.png",
+                    "assets/Objects/Flower/5.png",
+                    "assets/Objects/Flower/6.png",
+                    "assets/Objects/Flower/7.png",
+                    "assets/Objects/Flower/8.png",
+                    "assets/Objects/Flower/9.png",
+                    "assets/Objects/Flower/10.png",
+                    "assets/Objects/Flower/11.png",
+                    "assets/Objects/Flower/12.png"
+                ]
+            }
+        },
+        "lamp": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "none",
+            "kind": "decor",
+            "light": {
+                "radius": 160,
+                "strength": 0.9
+            },
+            "name": "Gaz Lambası",
+            "shadow": {
+                "alpha": 0.45,
+                "atlas": "assets/Objects/Shadow/{n}.png",
+                "height": 9,
+                "n": 2,
+                "offsetY": 0,
+                "width": 20
+            },
+            "spawn": {
+                "bigOnly": false,
+                "cells": 1,
+                "chance": 0.06,
+                "salt": 4,
+                "size": "small"
+            },
+            "sprite": {
+                "depth": 20,
+                "groundOffset": 0,
+                "originY": 0.85,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Decor/Lamp1.png"
+                ]
+            }
+        },
+        "log": {
+            "drop": {
+                "count": 1,
+                "countMax": 2,
+                "itemId": "wood"
+            },
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "harvest": {
+                "hitHalfWidth": 26,
+                "holdTime": 5.6,
+                "range": 62,
+                "shakes": 2
+            },
+            "interaction": "hold",
+            "kind": "harvestable",
+            "name": "Kütük",
+            "shadow": {
+                "atlas": "assets/Objects/Shadow/{n}.png",
+                "height": 13,
+                "n": 3,
+                "offsetY": 0,
+                "width": 30
+            },
+            "spawn": {
+                "bigOnly": false,
+                "cells": 4,
+                "chance": 0.1,
+                "salt": 5,
+                "size": "small"
+            },
+            "sprite": {
+                "box": {
+                    "h": 12,
+                    "w": 26
+                },
+                "depth": 30,
+                "groundOffset": 8,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Decor/Log1.png",
+                    "assets/Objects/Decor/Log2.png",
+                    "assets/Objects/Decor/Log3.png",
+                    "assets/Objects/Decor/Log4.png"
+                ]
+            },
+            "variants": [
+                {
+                    "footprint": {
+                        "h": 2,
+                        "w": 4
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 16,
+                            "w": 44
+                        }
+                    },
+                    "texture": "assets/Objects/Decor/Log1.png"
+                },
+                {
+                    "footprint": {
+                        "h": 3,
+                        "w": 4
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 32,
+                            "w": 102,
+                            "top": -4,
+                            "left": -4,
+                            "angle": 45
+                        }
+                    },
+                    "texture": "assets/Objects/Decor/Log2.png"
+                },
+                {
+                    "footprint": {
+                        "h": 1,
+                        "w": 4
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 16,
+                            "w": 60
+                        }
+                    },
+                    "texture": "assets/Objects/Decor/Log3.png"
+                },
+                {
+                    "footprint": {
+                        "h": 3,
+                        "w": 1
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 74,
+                            "w": 32,
+                            "top": 18
+                        }
+                    },
+                    "texture": "assets/Objects/Decor/Log4.png"
+                }
+            ]
+        },
+        "plant": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "none",
+            "kind": "decor",
+            "name": "Çalı",
+            "sprite": {
+                "depth": 40,
+                "origin": 0,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Grass/1.png",
+                    "assets/Objects/Grass/2.png",
+                    "assets/Objects/Grass/3.png",
+                    "assets/Objects/Grass/4.png",
+                    "assets/Objects/Grass/5.png",
+                    "assets/Objects/Grass/6.png"
+                ]
+            }
+        },
+        "rock": {
+            "footprint": {
+                "h": 2,
+                "w": 2
+            },
+            "interaction": "none",
+            "kind": "obstacle",
+            "name": "Kaya",
+            "shadow": {
+                "atlas": "assets/Objects/Shadow/{n}.png",
+                "height": 20,
+                "n": 4,
+                "offsetY": 0,
+                "width": 52
+            },
+            "spawn": {
+                "bigOnly": true,
+                "cells": 4,
+                "chance": 0.3,
+                "salt": 2,
+                "size": "big"
+            },
+            "sprite": {
+                "box": {
+                    "h": 20,
+                    "w": 64
+                },
+                "depth": 3000,
+                "groundOffset": 8,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Rock/1.png",
+                    "assets/Objects/Rock/2.png",
+                    "assets/Objects/Rock/3.png",
+                    "assets/Objects/Rock/4.png",
+                    "assets/Objects/Rock/5.png",
+                    "assets/Objects/Rock/6.png",
+                    "assets/Objects/Rock/7.png",
+                    "assets/Objects/Rock/8.png",
+                    "assets/Objects/Rock/9.png",
+                    "assets/Objects/Rock/10.png"
+                ]
+            },
+            "variants": [
+                {
+                    "footprint": {
+                        "h": 2,
+                        "w": 4
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 20,
+                            "w": 96
+                        },
+                        "groundOffset": 8
+                    },
+                    "texture": "assets/Objects/Rock/1.png"
+                },
+                {
+                    "footprint": {
+                        "h": 2,
+                        "w": 3
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 20,
+                            "w": 96
+                        },
+                        "groundOffset": 8
+                    },
+                    "texture": "assets/Objects/Rock/2.png"
+                },
+                {
+                    "footprint": {
+                        "h": 3,
+                        "w": 3
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 32,
+                            "w": 64
+                        },
+                        "groundOffset": 8
+                    },
+                    "texture": "assets/Objects/Rock/3.png"
+                },
+                {
+                    "footprint": {
+                        "h": 3,
+                        "w": 3
+                    },
+                    "sprite": {
+                        "box": {
+                            "h": 32,
+                            "w": 96
+                        },
+                        "groundOffset": 8
+                    },
+                    "texture": "assets/Objects/Rock/4.png"
+                }
+            ]
+        },
+        "stick": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "pickup",
+            "kind": "resource",
+            "name": "Sopa",
+            "pickup": {
+                "amount": 1,
+                "range": 60
+            },
+            "spawn": {
+                "chance": 0
+            },
+            "sprite": {
+                "depth": 50,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Decor/Log2.png"
+                ]
+            },
+            "stackLabel": "Sopa"
+        },
+        "stone": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "pickup",
+            "kind": "resource",
+            "name": "Taş",
+            "pickup": {
+                "amount": 1,
+                "range": 52
+            },
+            "shadow": {
+                "atlas": "assets/Objects/Shadow/{n}.png",
+                "height": 7,
+                "n": 1,
+                "offsetY": 0,
+                "width": 13
+            },
+            "spawn": {
+                "bigOnly": false,
+                "cells": 4,
+                "chance": 0.252,
+                "salt": 2,
+                "size": "small"
+            },
+            "sprite": {
+                "depth": 60,
+                "groundOffset": 0,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Stone/1.png",
+                    "assets/Objects/Stone/2.png",
+                    "assets/Objects/Stone/3.png",
+                    "assets/Objects/Stone/4.png",
+                    "assets/Objects/Stone/5.png",
+                    "assets/Objects/Stone/6.png"
+                ]
+            },
+            "stackLabel": "Taş"
+        },
+        "tree": {
+            "drop": {
+                "count": 1,
+                "countMax": 3,
+                "itemId": "wood"
+            },
+            "footprint": {
+                "h": 5,
+                "w": 3
+            },
+            "harvest": {
+                "hitHalfWidth": 34,
+                "holdTime": 8,
+                "range": 70,
+                "shakes": 1
+            },
+            "interaction": "hold",
+            "kind": "harvestable",
+            "name": "Ağaç",
+            "shadow": {
+                "atlas": "assets/Objects/Shadow/{n}.png",
+                "n": 5,
+                "offsetY": 0
+            },
+            "spawn": {
+                "bigOnly": true,
+                "cells": 4,
+                "chance": 1,
+                "salt": 0,
+                "size": "big"
+            },
+            "sprite": {
+                "box": {
+                    "h": 40,
+                    "w": 84
+                },
+                "depth": 3010,
+                "groundOffset": 100,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Decor/Tree1.png"
+                ]
+            },
+            "stump": {
+                "atlas": "assets/Objects/Decor/Tree{n}.png",
+                "collider": 0.7,
+                "colliderH": 16,
+                "colliderW": 26,
+                "groundOffset": -12,
+                "n": 2,
+                "offsetX": 12,
+                "offsetY": -12,
+                "scale": 3,
+                "shadow": {
+                    "alpha": 0.34,
+                    "height": 13,
+                    "n": 3,
+                    "offsetY": 0,
+                    "width": 30
+                }
+            }
+        },
+        "wood": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "pickup",
+            "kind": "resource",
+            "name": "Odun",
+            "pickup": {
+                "amount": 1,
+                "range": 60
+            },
+            "spawn": {
+                "chance": 0
+            },
+            "sprite": {
+                "depth": 70,
+                "scale": 1,
+                "textures": [
+                    "assets/Objects/Decor/Log1.png"
+                ]
+            },
+            "stackLabel": "Odun"
+        },
+        "woodPile": {
+            "footprint": {
+                "h": 1,
+                "w": 1
+            },
+            "interaction": "none",
+            "kind": "decor",
+            "name": "Odun Yığını",
+            "shadow": {
+                "alpha": 0.34,
+                "atlas": "assets/Objects/Shadow/{n}.png",
+                "height": 17,
+                "n": 4,
+                "offsetY": 0,
+                "width": 40
+            },
+            "spawn": {
+                "bigOnly": false,
+                "cells": 1,
+                "chance": 0.05,
+                "salt": 6,
+                "size": "small"
+            },
+            "sprite": {
+                "depth": 80,
+                "groundOffset": -8,
+                "scale": 3,
+                "textures": [
+                    "assets/Objects/Decor/Log3.png"
+                ]
+            }
+        }
+    },
+    "render": {
+        "fallbackTile": "assets/Tiles0/FieldsTile_38.png",
+        "grassCells": 4,
+        "grassChance": 0.8,
+        "grassDensity": 0.36
+    },
+    "stats": [
+        {
+            "id": "chopped",
+            "label": "Kesilen Ağaç",
+            "resource": "wood",
+            "source": "tree"
+        },
+        {
+            "id": "logs",
+            "label": "Kesilen Kütük",
+            "resource": "wood",
+            "source": "log"
+        }
+    ],
+    "terrain": {
+        "grass": {
+            "atlas": "assets/Objects/Grass/{n}.png",
+            "depth": 1,
+            "spawnChance": 0.36,
+            "variants": 6
+        },
+        "ground": {
+            "atlas": "assets/Tiles0/FieldsTile_{n}.png",
+            "n": 38
+        },
+        "lake": {
+            "chance": 0.12,
+            "lobeMinRadius": 1,
+            "lobeRadiusSpread": 3,
+            "lobeSpread": 3,
+            "minLobes": 1,
+            "minRadius": 2,
+            "radiusSpread": 3
+        },
+        "water": {
+            "deep": "#2e6da4",
+            "foam": "#d9f0f7",
+            "mid": "#418fc0",
+            "shallow": "#63b3d9"
+        }
+    },
+    "tileSize": 32,
+    "ui": {
+        "action_panel": "assets/Interface/Action_panel.png",
+        "bar_red": "assets/Interface/bar_red.png",
+        "hotbar_bg": "assets/Interface/onlyhotbar.png",
+        "panel_empty": "assets/Interface/panel_empty.png"
     }
-  },
-
-  "objects": {
-    "stone": {
-      "name": "Taş",
-      "stackLabel": "Taş",
-      "kind": "resource",
-      "interaction": "pickup",
-      "shape": { "w": 1, "h": 1 },
-      "sprite": { "atlas": "assets/Objects/Stone/{n}.png", "variants": 8, "display": 0.42, "depth": 2, "groundOffset": 0 },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 1, "offsetY": 0, "width": 13, "height": 7 },
-      "spawn": { "chance": 0.252, "cells": 4, "salt": 2, "bigOnly": false, "size": "small", "texMin": 1, "texMax": 1 },
-      "pickup": { "range": 52, "amount": 1 }
-    },
-
-    "rock": {
-      "name": "Kaya",
-      "kind": "obstacle",
-      "interaction": "none",
-      "shape": { "w": 2, "h": 2 },
-      "sprite": {
-        "atlas": "assets/Objects/Rock/{n}.png", "variants": 8, "display": 0.85, "depth": 2,
-        "groundOffset": 8, "collider": 0.85, "colliderW": 28, "colliderH": 5
-      },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0, "width": 52, "height": 20},
-      "spawn": { "chance": 0.3, "cells": 4, "salt": 2, "bigOnly": true, "size": "big", "texMin": 7, "texMax": 12 }
-    },
-
-    "log": {
-      "name": "Kütük",
-      "kind": "harvestable",
-      "interaction": "hold",
-      "shape": { "w": 1, "h": 1 },
-      "sprite": {
-        "atlas": "assets/Objects/Decor/Log{n}.png", "variants": 4, "scale": 1.15, "depth": 2,
-        "groundOffset": 8, "collider": 0.5, "colliderW": 26, "colliderH": 12
-      },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 3, "offsetY": 0, "width": 30, "height": 13},
-      "spawn": { "chance": 0.22, "cells": 4, "salt": 5, "bigOnly": false, "size": "small" },
-      "harvest": { "holdTime": 5.6, "range": 62, "hitHeight": 20, "hitHalfWidth": 26, "shakes": 2 },
-      "drop": { "itemId": "wood", "count": 1, "countMax": 2 }
-    },
-
-    "wood": {
-      "name": "Odun",
-      "stackLabel": "Odun",
-      "kind": "resource",
-      "interaction": "pickup",
-      "shape": { "w": 1, "h": 1 },
-      "sprite": { "atlas": "assets/Objects/Decor/Log{n}.png", "n": 1, "scale": 0.8, "depth": 3 },
-      "spawn": { "chance": 0 },
-      "pickup": { "range": 60, "amount": 1 }
-    },
-
-    "tree": {
-      "name": "Ağaç",
-      "kind": "harvestable",
-      "interaction": "hold",
-      "shape": { "w": 2, "h": 2 },
-      "sprite": {
-        "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 1, "scale": 1.6, "depth": 3000,
-        "groundOffset": 54, "collider": 0.7, "colliderW": 30, "colliderH": 18
-      },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 6, "offsetY": 0},
-      "spawn": { "chance": 0.25, "cells": 4, "salt": 0, "bigOnly": true, "size": "big" },
-      "harvest": { "holdTime": 8, "range": 70, "hitHeight": 20, "hitHalfWidth": 34, "shakes": 1 },
-      "drop": { "itemId": "wood", "count": 1, "countMax": 3 },
-      "stump": {
-        "atlas": "assets/Objects/Decor/Tree{n}.png", "n": 2, "scale": 1.7,
-        "offsetY": -12, "offsetX": 12, "groundOffset": -12, "collider": 0.7, "colliderW": 26, "colliderH": 16,
-        "shadow": { "n": 3, "offsetY": 0, "width": 30, "height": 13, "alpha": 0.34 }
-      }
-    },
-
-    "plant": {
-      "name": "Çalı",
-      "kind": "decor",
-      "interaction": "none",
-      "shape": { "w": 1, "h": 1 },
-      "sprite": { "atlas": "assets/Objects/Grass/{n}.png", "variants": 6, "scale": 2, "origin": 0, "depth": 1 }
-    },
-
-    "flower": {
-      "name": "Çiçek",
-      "kind": "decor",
-      "interaction": "none",
-      "shape": { "w": 1, "h": 1 },
-      "sprite": { "atlas": "assets/Objects/Flower/{n}.png", "variants": 12, "scale": 2.4, "origin": 0, "depth": 1 }
-    },
-
-    "lamp": {
-      "name": "Gaz Lambası",
-      "kind": "decor",
-      "interaction": "none",
-      "shape": { "w": 1, "h": 1 },
-      "light": { "radius": 160, "strength": 0.9 },
-      "sprite": {
-        "atlas": "assets/Objects/Decor/Lamp{n}.png", "n": 1, "depth": 2,
-        "originY": 0.85, "display": 2.2, "groundOffset": 0
-      },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 2, "offsetY": 0, "width": 20, "height": 9, "alpha": 0.45 },
-      "spawn": { "chance": 0.06, "cells": 1, "salt": 4, "bigOnly": false, "size": "small" }
-    },
-
-    "woodPile": {
-      "name": "Odun Yığını",
-      "kind": "decor",
-      "interaction": "none",
-      "shape": { "w": 1, "h": 1 },
-      "sprite": { "atlas": "assets/Objects/Decor/Log{n}.png", "n": 3, "scale": 1.5, "depth": 2, "groundOffset": -8 },
-      "shadow": { "atlas": "assets/Objects/Shadow/{n}.png", "n": 4, "offsetY": 0, "width": 40, "height": 17, "alpha": 0.34 },
-      "spawn": { "chance": 0.05, "cells": 1, "salt": 6, "bigOnly": false, "size": "small" }
-    }
-  }
 }

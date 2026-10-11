@@ -67,6 +67,9 @@ export class InteractionSystem {
   pick(record) {
     if (!record) return false;
     this.layer.markRemoved(record.id);
+    if (this.scene.network && this.scene.network.sendObjectRemoved) {
+      this.scene.network.sendObjectRemoved(record.type, record.id);
+    }
     this.scene.network.sendPick(record.def.id);
     this.scene.sfx.pickup();
     return true;
@@ -276,6 +279,53 @@ export class InteractionSystem {
   _pushOutOfRect(player, rect) {
     const feetX = player.x;
     const feetY = player.y + FEET_OFFSET;
+
+    // Açılı kutu (OBB): ayak noktasını kutunun yerel uzayına taşıyıp klasik
+    // daire–kutu çözümünü orada uygular, sonucu dünya uzayına geri çevirir.
+    // Açı 0 ise bu dalga hiç çalışmaz (eski AABB davranışı birebir korunur).
+    if (rect.angle) {
+      const cos = Math.cos(rect.angle);
+      const sin = Math.sin(rect.angle);
+      const hw = rect.w / 2;
+      const hh = rect.h / 2;
+      const dx = feetX - rect.cx;
+      const dy = feetY - rect.cy;
+      // Dünya → yerel (kutu merkezinde, -angle kadar döndür).
+      const lx = dx * cos + dy * sin;
+      const ly = -dx * sin + dy * cos;
+      const closestX = Math.max(-hw, Math.min(lx, hw));
+      const closestY = Math.max(-hh, Math.min(ly, hh));
+      const ddx = lx - closestX;
+      const ddy = ly - closestY;
+      const distance = Math.hypot(ddx, ddy);
+      if (distance >= PLAYER_RADIUS) return;
+
+      let newLx;
+      let newLy;
+      if (distance > 0.001) {
+        const push = (PLAYER_RADIUS - distance) / distance;
+        newLx = lx + ddx * push;
+        newLy = ly + ddy * push;
+      } else {
+        // Ayak kutusunun içinde: yerel uzayda en yakın kenardan dışarı it.
+        const outLeft = lx + hw;
+        const outRight = hw - lx;
+        const outTop = ly + hh;
+        const outBottom = hh - ly;
+        const min = Math.min(outLeft, outRight, outTop, outBottom);
+        if (min === outTop) { newLx = lx; newLy = ly - outTop - PLAYER_RADIUS; }
+        else if (min === outBottom) { newLx = lx; newLy = ly + outBottom + PLAYER_RADIUS; }
+        else if (min === outLeft) { newLx = lx - outLeft - PLAYER_RADIUS; newLy = ly; }
+        else { newLx = lx + outRight + PLAYER_RADIUS; newLy = ly; }
+      }
+      // Yerel → dünya (angle kadar döndür) ve oyuncuya uygula.
+      const ndx = newLx * cos - newLy * sin;
+      const ndy = newLx * sin + newLy * cos;
+      player.x = Math.round(rect.cx + ndx);
+      player.y = Math.round(rect.cy + ndy - FEET_OFFSET);
+      return;
+    }
+
     const closestX = Math.max(rect.x, Math.min(feetX, rect.x + rect.w));
     const closestY = Math.max(rect.y, Math.min(feetY, rect.y + rect.h));
     const dx = feetX - closestX;

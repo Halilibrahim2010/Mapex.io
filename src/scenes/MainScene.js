@@ -19,6 +19,7 @@ import { SoundFX } from '../core/SoundFX.js';
 import { Hud } from '../ui/Hud.js';
 import { PauseMenu } from '../ui/PauseMenu.js';
 import { InventoryView } from '../ui/InventoryView.js';
+import { CraftingView } from '../ui/CraftingView.js';
 import { Inventory } from '../core/Inventory.js';
 import { SettingsPanel } from '../ui/SettingsPanel.js';
 import { UI_DEPTH } from '../ui/uiDepth.js';
@@ -26,6 +27,7 @@ import { getSettings, onSettingsChange, keyCodeName } from '../core/GameSettings
 import { ChatService } from '../chat/ChatService.js';
 import { ChatBox } from '../chat/ChatBox.js';
 import { ChatNotice } from '../chat/ChatNotice.js';
+import { DebugOverlay } from '../debug/DebugOverlay.js';
 import { applySessionState } from '../account/index.js';
 
 const CURSOR_TIP_OFFSET_X = -6;
@@ -80,6 +82,10 @@ export class MainScene extends Phaser.Scene {
     this.inventory = new Inventory();
     this.inventoryView = new InventoryView(this);
     this.inventoryView.createHotbar(5);
+    // Üretim paneli: envanterin sağında açılır, sahneye üretim kararını sorar.
+    this.craftingView = new CraftingView(this, this.inventoryView);
+    this.inventoryView.craftingView = this.craftingView;
+    this.craftingView.onCraft = (recipeId, slots) => this.craftItem(recipeId, slots);
 
     this.hud = new Hud(this);
     this.hud.create();
@@ -207,6 +213,9 @@ export class MainScene extends Phaser.Scene {
     this.pauseMenu.bindEscapeKey();
     this._bindKeyActions();
     this._startChat();
+    // Debug: hitbox cizimi (sunucudan gelen debugCollider olayi NetworkManager
+    // uzerinden bu katmani acar/kapatir).
+    this.debugOverlay = new DebugOverlay(this);
   }
 
   // Sohbet: servis (ag), pencere (sol altta) ve bildirimler (ustte) birlikte kurulur.
@@ -330,12 +339,40 @@ export class MainScene extends Phaser.Scene {
   toggleInventory() {
     if (this.inventoryView.isOpen) {
       this.inventoryView.close();
+      if (this.craftingView) this.craftingView.close();
       this.inventoryOpen = false;
       return;
     }
     if (this.menuOpen) this.closeMenu();
     this.inventoryOpen = true;
     this.inventoryView.open(this.inventoryItems());
+    // Üretim düğmesi envanterin altına eklenir; basınca sağda paneller açılır.
+    this.inventoryView.addCraftButton(() => this.toggleCrafting());
+  }
+
+  // Envanterin altındaki Üretim düğmesi: sağda tarif + üretim panelleri.
+  toggleCrafting() {
+    if (!this.inventoryView.isOpen) return;
+    if (this.craftingView.isOpen) {
+      this.craftingView.close();
+      return;
+    }
+    this.craftingView.openPanel(this.inventoryView.panelBounds);
+  }
+
+  // Üretim isteği: sunucuya (veya yerel moda) gönderilir; sonuç
+  // inventoryState ile gelir, slotlar o zaman boşaltılır.
+  craftItem(recipeId, slots) {
+    if (!this.network) return;
+    if (this.network.sendCraft) {
+      this.network.sendCraft(recipeId, slots);
+    } else {
+      this.network.emit('craft', { recipeId, slots });
+    }
+    // Yerel modda sonuç anında gelir; çok oyunculuda inventoryState beklenir.
+    // Başarı varsayımıyla slotları hemen boşaltma: sunucu reddedebilir.
+    // Bunun yerine CraftingView, envanter tazelenince sahneden haber alır.
+    this._pendingCraft = { recipeId };
   }
 
   // Hotbar/envanter çizimi için sıralı liste (dolu slotlar).
@@ -351,6 +388,11 @@ export class MainScene extends Phaser.Scene {
     this.stats = state.stats || {};
     if (state.drops) this.drops.applyState(state.drops);
     this.refreshUi();
+    // Üretim sonucu geldi: bekleyen üretim varsa slotları boşalt.
+    if (this._pendingCraft && this.craftingView && this.craftingView.isOpen) {
+      this.craftingView.onCrafted();
+    }
+    this._pendingCraft = null;
   }
 
   applyWorldState(state) {
@@ -405,6 +447,7 @@ export class MainScene extends Phaser.Scene {
     this.ambience.update(delta);
     if (this.inventoryView.isOpen) this.refreshUi();
     this._updateChat();
+    if (this.debugOverlay) this.debugOverlay.update();
   }
 
   // Sohbet: yeni mesaj çizimi (throttle) + bekleyen bildirimler.

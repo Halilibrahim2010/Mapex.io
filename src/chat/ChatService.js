@@ -75,10 +75,17 @@ export class ChatService {
   // --- Gonderim ------------------------------------------------------------
 
   // Metni cozumler ve gonderir. { error } donerse ChatBox sistem satiri yazar.
+  // "/" ile baslayan metin debug komutudur: sohbete dusmez, sunucuya gider.
   send(text) {
     const value = String(text || '').trim();
     if (!value) return { error: 'Bos mesaj gonderilemez.' };
     if (!this.network) return { error: 'Baglanti yok: mesaj gonderilemedi.' };
+
+    if (value.startsWith('/')) {
+      this.network.emit('chatSend', { kind: CHAT_KIND.MESSAGE, text: value });
+      this.model.remember(value);
+      return { ok: true };
+    }
 
     const privateMessage = this.resolvePrivateMessage(value);
     if (privateMessage) {
