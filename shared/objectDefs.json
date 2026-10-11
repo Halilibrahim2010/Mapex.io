@@ -99,7 +99,7 @@
             "spawn": {
                 "bigOnly": false,
                 "cells": 1,
-                "chance": 0.06,
+                "chance": 0.025,
                 "salt": 4,
                 "size": "small"
             },
@@ -142,7 +142,7 @@
             "spawn": {
                 "bigOnly": false,
                 "cells": 4,
-                "chance": 0.1,
+                "chance": 0.15,
                 "salt": 5,
                 "size": "small"
             },
@@ -260,7 +260,7 @@
             "spawn": {
                 "bigOnly": true,
                 "cells": 4,
-                "chance": 0.3,
+                "chance": 0.2,
                 "salt": 2,
                 "size": "big"
             },
@@ -390,7 +390,7 @@
             "spawn": {
                 "bigOnly": false,
                 "cells": 4,
-                "chance": 0.252,
+                "chance": 0.15,
                 "salt": 2,
                 "size": "small"
             },
@@ -416,8 +416,8 @@
                 "itemId": "wood"
             },
             "footprint": {
-                "h": 5,
-                "w": 3
+                "h": 6,
+                "w": 4
             },
             "harvest": {
                 "hitHalfWidth": 34,
@@ -436,7 +436,7 @@
             "spawn": {
                 "bigOnly": true,
                 "cells": 4,
-                "chance": 1,
+                "chance": 0.4,
                 "salt": 0,
                 "size": "big"
             },
@@ -514,7 +514,7 @@
             "spawn": {
                 "bigOnly": false,
                 "cells": 1,
-                "chance": 0.05,
+                "chance": 0.03,
                 "salt": 6,
                 "size": "small"
             },

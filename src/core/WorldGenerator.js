@@ -63,43 +63,46 @@ export class WorldGenerator {
     const rnd = this.randomAt(chunkX, chunkY, spawn.salt || 0);
     const cells = spawn.cells || this.chunkSize;
     const cellW = this.worldSize / cells;
-    // Büyük nesne, chunk kenarından taşmasın diye son sütun/satırları atlar.
-    const lastAllowed = spawn.bigOnly ? cells - (def.tileW - 1) : cells;
+    const chunkMinX = chunkX * this.worldSize;
+    const chunkMinY = chunkY * this.worldSize;
+    const chunkMaxX = chunkMinX + this.worldSize;
+    const chunkMaxY = chunkMinY + this.worldSize;
+    const isBig = spawn.size === 'big';
+    const clusterStep = Math.max(2, Math.floor(cells / (isBig ? 2.2 : 3.5)));
+    const localRadius = Math.max(cellW * 0.9, cellW * (isBig ? 1.6 : 2.2));
     const list = [];
 
-    for (let cy = 0; cy < cells; cy++) {
-      for (let cx = 0; cx < cells; cx++) {
-        if (cx >= lastAllowed || cy >= lastAllowed) continue;
-        if (rnd() >= spawn.chance) continue;
+    for (let cy = 0; cy < cells; cy += clusterStep) {
+      for (let cx = 0; cx < cells; cx += clusterStep) {
+        const regionNoise = rnd();
+        const effectiveChance = Math.min(0.95, spawn.chance * (0.7 + regionNoise * 0.9));
+        if (regionNoise > effectiveChance) continue;
 
-        const isBig = spawn.size === 'big';
-        const x = isBig
-          ? chunkX * this.worldSize + (cx + 0.5) * cellW
-          : chunkX * this.worldSize + cx * cellW + Math.floor(rnd() * cellW);
-        const y = isBig
-          ? chunkY * this.worldSize + (cy + 0.5) * cellW
-          : chunkY * this.worldSize + cy * cellW + Math.floor(rnd() * cellW);
+        const centerX = chunkMinX + (cx + 0.5 + (rnd() - 0.5) * 0.8) * cellW;
+        const centerY = chunkMinY + (cy + 0.5 + (rnd() - 0.5) * 0.8) * cellW;
+        const clusterCount = isBig ? 1 + Math.floor(rnd() * 2) : 1 + Math.floor(rnd() * 3);
 
-        // Nesneler asla suya düşmez: ayak izinin su içinde kalması yeterli.
-        // (Önce doku seçilir ki varyant shape doğru ayak iziyle kontrol edilsin.)
-        const texture = pickTexture(def, rnd);
-        if (this._overlapsWater(x, y, def, texture)) continue;
+        for (let i = 0; i < clusterCount; i++) {
+          const x = centerX + (rnd() - 0.5) * localRadius * 2;
+          const y = centerY + (rnd() - 0.5) * localRadius * 2;
+          if (x < chunkMinX || y < chunkMinY || x > chunkMaxX || y > chunkMaxY) continue;
 
-        // Üst üste binme: item'ın shape (karo) ayak izi boşsa yerleşir ve
-        // kapladığı karolar `taken`'a işlenir; çakışıyorsa atlanır.
-        if (!this._claimFootprint(x, y, def, texture, taken)) continue;
+          const texture = pickTexture(def, rnd);
+          if (this._overlapsWater(x, y, def, texture)) continue;
+          if (!this._claimFootprint(x, y, def, texture, taken)) continue;
 
-        list.push({
-          itemId: id,
-          size: spawn.size || 'small',
-          isBig,
-          texture,
-          x,
-          y,
-          chunkX,
-          chunkY,
-          index: list.length
-        });
+          list.push({
+            itemId: id,
+            size: spawn.size || 'small',
+            isBig,
+            texture,
+            x,
+            y,
+            chunkX,
+            chunkY,
+            index: list.length
+          });
+        }
       }
     }
     return list;

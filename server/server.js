@@ -17,8 +17,8 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 // MIN ve MAX sürüm limitlerin
-const MIN_VERSION = "1.1.0";
-const MAX_VERSION = "1.1.0";
+const MIN_VERSION = "1.1.1";
+const MAX_VERSION = "1.1.1";
 
 // Semver mantığı veya basit string/float kıyaslaması için yardımcı fonksiyon
 function isVersionAllowed(v) {
@@ -83,34 +83,36 @@ const gameHandlers = attachSocketHandlers(
   authLayer,
 );
 
-// Terminal REPL: client sohbetinde yazılan /komutlar buradan da çalıştırılabilir
-// (aynı DebugCommands havuzu). Yayın (io.emit) tüm istemcilere gider.
-const readline = require("readline");
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: "mapex> ",
-});
-console.log(
-  "[Terminal] /komut yazabilirsin (örn. /collider show, /tile show, /help). Kapat: /exit",
-);
-rl.prompt();
-rl.on("line", async (line) => {
-  const text = String(line || "").trim();
-  if (text) {
-    if (text === "/exit" || text === "exit") {
-      console.log("[Terminal] Sunucu kapatılıyor...");
-      process.exit(0);
-    }
-    try {
-      const result = await gameHandlers.runCommand(text);
-      if (result && result.reply) console.log(result.reply);
-    } catch (error) {
-      console.error("[Terminal] Komut hatası:", error.message);
-    }
-  }
+function startTerminal() {
+  // Terminal REPL: client sohbetinde yazılan /komutlar buradan da çalıştırılabilir
+  // (aynı DebugCommands havuzu). Yayın (io.emit) tüm istemcilere gider.
+  const readline = require("readline");
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: "mapex> ",
+  });
+  console.log(
+    "[Terminal] /komut yazabilirsin (örn. /collider show, /tile show, /help). Kapat: /exit",
+  );
   rl.prompt();
-});
+  rl.on("line", async (line) => {
+    const text = String(line || "").trim();
+    if (text) {
+      if (text === "/exit" || text === "exit") {
+        console.log("[Terminal] Sunucu kapatılıyor...");
+        process.exit(0);
+      }
+      try {
+        const result = await gameHandlers.runCommand(text);
+        if (result && result.reply) console.log(result.reply);
+      } catch (error) {
+        console.error("[Terminal] Komut hatası:", error.message);
+      }
+    }
+    rl.prompt();
+  });
+}
 
 // Sunucu ayarları shared/serverSettings.json'dan okunur (yeni port: 12090).
 const serverSettingsPath = path.join(
@@ -134,6 +136,9 @@ try {
 }
 
 const PORT = process.env.PORT || serverSettings.port;
-server.listen(PORT, () =>
-  console.log(`[Sunucu] \u001b]8;;${url}\u0007${text}\u001b]8;;\u0007`),
-);
+server.listen(PORT, () => {
+  console.log(
+    `\u001b[32m[Sunucu]\u001b[0m \u001b]8;;${url}\u0007${text}\u001b]8;;\u0007`,
+  );
+  startTerminal();
+});
